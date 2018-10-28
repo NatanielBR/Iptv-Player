@@ -8,11 +8,15 @@ package iptv.player;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.stream.Collectors;
+import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
+import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -20,6 +24,8 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
+import javafx.scene.control.TextField;
+import javafx.scene.control.TextInputDialog;
 import javafx.scene.layout.Background;
 import javafx.stage.FileChooser;
 import javax.swing.JDialog;
@@ -39,40 +45,74 @@ public class FXMLDocumentController implements Initializable {
     private ListView<Info> Canais;
     @FXML
     private ListView<Button> Grupos;
+    @FXML
+    private TextField entGrupo, entCanal;
+    private List<Info> CANAIS = null;
+    private List<Button> GRUPOS = null;
 
-    public static boolean isvlcopen = false;
-
-    private final EventHandler<ActionEvent> grupos = (e) -> {
-        Button bt = (Button) e.getSource();
-        novaLista((List<Info>) bt.getUserData());
+    private EventHandler<ActionEvent> canalBusca = (a) -> {
+        String cont = entCanal.getText();
+        if (cont.isEmpty()) {
+            novosCanais(CANAIS);
+        } else {
+            List<Info> inf = CANAIS.stream().filter((as) -> as.getNome().toLowerCase().contains(cont.toLowerCase())).collect(Collectors.toList());
+            novosCanais(inf);
+        }
     };
 
-    private void novaLista(List<Info> lis) {
-        Canais.getItems().clear();
-        Canais.getItems().addAll(lis);
+    private EventHandler<ActionEvent> grupoBusca = (a) -> {
+        String cont = entGrupo.getText();
+        if (cont.isEmpty()) {
+            novosGrupos(GRUPOS);
+        } else {
+            List<Button> inf = GRUPOS.stream().filter((as) -> as.getText().toLowerCase().contains(cont.toLowerCase())).collect(Collectors.toList());
+            novosGrupos(inf);
+        }
+    };
+    
+    public static boolean isvlcopen = false;
+
+    private final EventHandler<ActionEvent> grupoAct = (e) -> {
+        Button bt = (Button) e.getSource();
+        novosCanais((List<Info>) bt.getUserData());
+    };
+
+    private void novosCanais(List<Info> lis) {
+        Canais.setItems(FXCollections.observableList(lis));
+    }
+    private void novosGrupos(List<Button> lis){
+        Grupos.setItems(FXCollections.observableList(lis));
     }
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         String m3u = Propriedades.instancia.M3U_URL;
-        if (m3u==null){
-            FileChooser fil = new FileChooser();
-            File f = fil.showOpenDialog(null);
-            if (f==null){
-                System.exit(0);
-            }else{
-                m3u = f.getPath();
-                Propriedades.instancia.salvar("m3u", m3u);
+        entCanal.setOnAction(canalBusca);
+        entGrupo.setOnAction(grupoBusca);
+        if (m3u == null) {
+            TextInputDialog diag = new TextInputDialog();
+            diag.setHeaderText("Informe a url/caminho\nDeixe vazio para a escolha de arquivo");
+            String st = diag.showAndWait().orElse("");
+            if (st.isEmpty()) {
+                FileChooser chooser = new FileChooser();
+                chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Arquivo M3U", "*.m3u"));
+                File f = chooser.showOpenDialog(null);
+                if (f == null) {
+                    Platform.exit();
+                } else {
+                    m3u = f.getPath();
+                    Propriedades.instancia.salvar("m3u", m3u);
+                }
             }
         }
         try {
-            InputStream stream = new FileInputStream(m3u);
-            List<Info> list = M3uParser.parser(stream);
+            List<Info> list = M3uParser.parser(m3u);
+            CANAIS = list;
             Canais.setCellFactory((param) -> {
                 return new ListCell<Info>() {
                     @Override
                     protected void updateItem(Info item, boolean empty) {
-                        super.updateItem(item, empty); //To change body of generated methods, choose Tools | Templates.
+                        super.updateItem(item, empty);
                         if (item != null) {
                             setOnMouseClicked((event) -> {
                                 JDialog diag = new JDialog();
@@ -96,6 +136,7 @@ public class FXMLDocumentController implements Initializable {
                                         super.windowClosing(we);
                                         comp.release();
                                         isvlcopen = false;
+                                        System.gc();
                                     }
                                 });
                                 diag.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
@@ -105,19 +146,21 @@ public class FXMLDocumentController implements Initializable {
                         }
                     }
 
-                }; //To change body of generated lambdas, choose Tools | Templates.
+                };
             });
-            novaLista(list);
+            novosCanais(list);
+            List<Button> grupos = new ArrayList<>();
             M3uParser.getGrupos(list).forEach((chave, valor) -> {
                 Button bt = new Button(chave);
-                bt.setOnAction(grupos);
+                bt.setOnAction(this.grupoAct);
                 bt.setUserData(valor);
                 bt.setBackground(Background.EMPTY);
-                Grupos.getItems().add(bt);
+                grupos.add(bt);
             });
+            GRUPOS = grupos;
+            novosGrupos(grupos);
         } catch (Exception ex) {
-            ex.printStackTrace();
-            System.exit(3);
+            IPTVPlayer.error(ex);
         }
     }
 
