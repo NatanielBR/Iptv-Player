@@ -46,8 +46,15 @@ public class IPTVPlayer extends Application {
      */
     public static void main(String[] args) {
         Propriedades propriedades = new Propriedades();
-        new NativeDiscovery().discover();
+        boolean found = new NativeDiscovery().discover();
         launch(args);
     }
-
+    public static void error(Exception err) {
+        Platform.runLater(()->{
+            Alert ale = new Alert(Alert.AlertType.ERROR);
+            ale.setContentText(err.toString());
+            ale.showAndWait();
+            Platform.exit();
+        });
+    }
 }

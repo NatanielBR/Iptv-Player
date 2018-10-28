@@ -5,12 +5,16 @@
  */
 package m3uteste.pkg2;
 
+import iptv.player.IPTVPlayer;
+import java.io.FileInputStream;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import javafx.application.Platform;
 
 /**
  *
@@ -37,9 +41,21 @@ public class M3uParser {
             System.out.println(ent.nextLine());
         }
     }
-    public static List<Info> parser(InputStream url) throws Exception {
-        List<Info> infos;
-        try (Scanner ent = new Scanner(url)) {
+    public static List<Info> parser(String url) throws Exception {
+        InputStream input = null;
+        Exception ers = null;
+        try{
+            for (int i = 0; i < 3; i++) {
+                input = url.contains("http")?new URL(url).openStream():new FileInputStream(url);
+            }
+        }catch(Exception err){
+            ers = err;
+        }
+        if (input == null){
+            iptv.player.IPTVPlayer.error(ers);
+        }
+        List<Info> infos=null;
+        try (Scanner ent = new Scanner(input)) {
             infos = new ArrayList<>();
             while (ent.hasNextLine()){
                 String line = ent.nextLine();
@@ -90,6 +106,9 @@ public class M3uParser {
                     m3u = "";
                 }
             }
+        }catch(Exception err){
+            IPTVPlayer.error(err);
+            Platform.exit();
         }
         return infos;
     }
