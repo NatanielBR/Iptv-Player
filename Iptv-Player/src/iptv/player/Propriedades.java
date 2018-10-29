@@ -5,12 +5,12 @@
  */
 package iptv.player;
 
+import com.sun.jmx.snmp.SnmpDataTypeEnums;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Properties;
 import java.util.logging.Level;
@@ -21,45 +21,50 @@ import java.util.logging.Logger;
  * @author Nataniel
  */
 public class Propriedades {
-    public String M3U_URL;
+
     public static Propriedades instancia;
+    private final String arquivo = "data.properties";
+
     public Propriedades() {
-        Properties prop = new Properties();
         instancia = this;
-        try {
-            prop.load(carregar());
-            M3U_URL = prop.getProperty("m3u",null);
-        } catch (FileNotFoundException ex) {
-            try {
-                new File("data.properties").createNewFile();
-                prop.load(carregar());
-                M3U_URL = prop.getProperty("m3u",null);
-            } catch (IOException ex1) {
-                Logger.getLogger(Propriedades.class.getName()).log(Level.SEVERE, null, ex1);
-            }
-        } catch (IOException ex) {
-            Logger.getLogger(Propriedades.class.getName()).log(Level.SEVERE, null, ex);
-            System.exit(1);
-        }
     }
-    private InputStream carregar() throws FileNotFoundException{
-        return new FileInputStream("data.properties");
+
+    public String getM3u() {
+        return carregar().getProperty("m3u", null);
     }
-    private OutputStream saida() throws FileNotFoundException{
-        return new FileOutputStream("data.properties");
-    }
-    public void salvar(String chave, String valor){
-        Properties prop = new Properties();
-        try {
-            prop.load(carregar());
-        } catch (Exception ex) {
-            Logger.getLogger(Propriedades.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        prop.put(chave, valor);
+
+    public void setM3u(String nv) {
+        Properties prop = carregar();
+        prop.put("m3u", nv);
         try {
             prop.store(saida(), "");
-        } catch (Exception ex) {
-            Logger.getLogger(Propriedades.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            IPTVPlayer.error(ex);
         }
+    }
+
+    private Properties carregar() {
+        Properties prop = new Properties();
+        File f = new File(arquivo);
+        try {
+            if (!f.exists()) {
+                f.createNewFile();
+            }
+            prop.load(new FileInputStream(f));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return prop;
+    }
+
+    private OutputStream saida() {
+        OutputStream out = null;
+        try {
+            out = new FileOutputStream(arquivo);
+        } catch (FileNotFoundException ex) {
+            IPTVPlayer.error(ex);
+        }
+        return out;
     }
 }

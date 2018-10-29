@@ -69,7 +69,7 @@ public class FXMLDocumentController implements Initializable {
             novosGrupos(inf);
         }
     };
-    
+
     public static boolean isvlcopen = false;
 
     private final EventHandler<ActionEvent> grupoAct = (e) -> {
@@ -80,29 +80,32 @@ public class FXMLDocumentController implements Initializable {
     private void novosCanais(List<Info> lis) {
         Canais.setItems(FXCollections.observableList(lis));
     }
-    private void novosGrupos(List<Button> lis){
+
+    private void novosGrupos(List<Button> lis) {
         Grupos.setItems(FXCollections.observableList(lis));
     }
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        String m3u = Propriedades.instancia.M3U_URL;
+        String m3u = Propriedades.instancia.getM3u();
         entCanal.setOnAction(canalBusca);
         entGrupo.setOnAction(grupoBusca);
         if (m3u == null) {
             TextInputDialog diag = new TextInputDialog();
             diag.setHeaderText("Informe a url/caminho\nDeixe vazio para a escolha de arquivo");
-            String st = diag.showAndWait().orElse("");
-            if (st.isEmpty()) {
+            m3u = diag.showAndWait().orElse("");
+            if (m3u.isEmpty()) {
                 FileChooser chooser = new FileChooser();
                 chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Arquivo M3U", "*.m3u"));
                 File f = chooser.showOpenDialog(null);
                 if (f == null) {
-                    Platform.exit();
+                    System.exit(3);
                 } else {
                     m3u = f.getPath();
-                    Propriedades.instancia.salvar("m3u", m3u);
+                    Propriedades.instancia.setM3u(m3u);
                 }
+            } else {
+                Propriedades.instancia.setM3u(m3u);
             }
         }
         try {
