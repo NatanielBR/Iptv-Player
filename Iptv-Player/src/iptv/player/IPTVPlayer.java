@@ -49,12 +49,20 @@ public class IPTVPlayer extends Application {
         boolean found = new NativeDiscovery().discover();
         launch(args);
     }
-    public static void error(Exception err) {
-        Platform.runLater(()->{
-            Alert ale = new Alert(Alert.AlertType.ERROR);
-            ale.setContentText(err.toString());
-            ale.showAndWait();
-            Platform.exit();
+
+    public static void error(Exception err, Class clse) {
+        Platform.runLater(() -> {
+            try {
+                Alert ale = new Alert(Alert.AlertType.ERROR);
+                ale.setContentText(err.toString());
+                ale.showAndWait();
+                err.printStackTrace();
+                System.exit(3);
+            } catch (Exception er) {
+                er.printStackTrace();
+                System.out.println(clse.getName());
+                err.printStackTrace();
+            }
         });
     }
 }
