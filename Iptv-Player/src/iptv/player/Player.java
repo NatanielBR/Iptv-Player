@@ -1,28 +1,37 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Copyright (C) 2019 Nataniel
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     (at your option) any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program.  If not, see [http://www.gnu.org/licenses/].
  */
+
 package iptv.player;
 
-import java.awt.BorderLayout;
-import java.awt.GridLayout;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.util.concurrent.atomic.AtomicBoolean;
-import javax.swing.JDialog;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
 import uk.co.caprica.vlcj.component.EmbeddedMediaListPlayerComponent;
 import uk.co.caprica.vlcj.component.EmbeddedMediaPlayerComponent;
 import uk.co.caprica.vlcj.player.MediaPlayer;
 import uk.co.caprica.vlcj.player.MediaPlayerEventAdapter;
 import uk.co.caprica.vlcj.player.embedded.EmbeddedMediaPlayer;
 
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 /**
- *
  * @author Nataniel
  */
 public class Player extends JDialog {
@@ -30,9 +39,9 @@ public class Player extends JDialog {
     private final String URL;
     private final AtomicBoolean PLAYER;
     private final EmbeddedMediaPlayer play;
-    private int volume = 0;
-    private JLabel lbVol;
     private final String VOLUME = "Volume: ";
+    private int volume;
+    private JLabel lbVol;
 
     public Player(String url, AtomicBoolean player) {
         URL = url;
@@ -89,7 +98,7 @@ public class Player extends JDialog {
                         }
                         break;
                     case KeyEvent.VK_ESCAPE:
-                        
+
                         break;
                 }
             }
