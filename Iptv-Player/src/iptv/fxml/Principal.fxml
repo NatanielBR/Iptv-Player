@@ -1,9 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.Insets?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.AnchorPane?>
-<?import javafx.scene.layout.HBox?>
 <!--
   ~ Copyright (C) 2019 Nataniel
   ~
@@ -21,8 +17,12 @@
   ~     along with this program.  If not, see [http://www.gnu.org/licenses/].
   -->
 
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
 <AnchorPane xmlns:fx="http://javafx.com/fxml/1" id="AnchorPane" prefHeight="549.0" prefWidth="646.0"
-            xmlns="http://javafx.com/javafx/8" fx:controller="iptv.fxml.FXMLDocumentController">
+            xmlns="http://javafx.com/javafx/8" fx:controller="iptv.fxml.PrincipalController">
     <children>
         <Label fx:id="status" layoutX="21.0" layoutY="514.0" prefHeight="17.0" prefWidth="606.0"/>
         <HBox fx:id="hbox" layoutX="12.0" layoutY="14.0" prefHeight="494.0" prefWidth="623.0" spacing="20.0">

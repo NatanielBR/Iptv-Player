@@ -35,9 +35,23 @@ public class Propriedades {
         return carregar().getProperty("m3u", null);
     }
 
+    public String getM3uLocal() {
+        return carregar().getProperty("m3uLocal", null);
+    }
+
     public void setM3u(String nv) {
         Properties prop = carregar();
         prop.put("m3u", nv);
+        try {
+            prop.store(saida(), "");
+        } catch (IOException ex) {
+            iptv.IPTVPlayer.error(ex, getClass());
+        }
+    }
+
+    public void setM3uLocal(String nv) {
+        Properties prop = carregar();
+        prop.put("m3uLocal", nv);
         try {
             prop.store(saida(), "");
         } catch (IOException ex) {

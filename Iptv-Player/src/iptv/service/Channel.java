@@ -45,7 +45,17 @@ public class Channel {
         return changed;
     }
 
-    public ExtInfo getCanal() {
+    public ExtInfo getChannel() {
         return canal;
+    }
+
+    @Override
+    public String toString() {
+        return canal.getCanalNome();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        return (o instanceof Channel) && o.hashCode() == this.getChannel().hashCode();
     }
 }

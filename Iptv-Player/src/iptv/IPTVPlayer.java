@@ -17,7 +17,7 @@
 
 package iptv;
 
-import iptv.fxml.FXMLDocumentController;
+import iptv.fxml.PrincipalController;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
@@ -56,14 +56,28 @@ public class IPTVPlayer extends Application {
         });
     }
 
+    public static void error(String err, Class clse) {
+        Platform.runLater(() -> {
+            try {
+                Alert ale = new Alert(Alert.AlertType.ERROR);
+                ale.setContentText(err);
+                ale.showAndWait();
+            } catch (Exception er) {
+                er.printStackTrace();
+                System.err.println(clse.getName());
+                System.err.println(err);
+            }
+        });
+    }
+
     @Override
     public void start(Stage stage) throws Exception {
-        Parent root = FXMLLoader.load(getClass().getResource("fxml/FXMLDocument.fxml"));
+        Parent root = FXMLLoader.load(getClass().getResource("fxml/Principal.fxml"));
         Scene scene = new Scene(root);
         stage.setResizable(false);
         stage.setScene(scene);
         stage.setOnCloseRequest((a) -> {
-            if (FXMLDocumentController.player.get()) {
+            if (PrincipalController.player.get()) {
                 Alert ale = new Alert(Alert.AlertType.WARNING);
                 ale.setTitle("Player ainda aberto");
                 ale.setContentText("Feche o player para sair da aplicação");

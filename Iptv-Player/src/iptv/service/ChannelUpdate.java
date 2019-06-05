@@ -29,12 +29,25 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 public class ChannelUpdate extends Service<ExtInfoList> {
+    private String m3u;
+
+    public ChannelUpdate() {
+        this.m3u = Propriedades.instancia.getM3u();
+    }
+
+    public String getM3u() {
+        return m3u;
+    }
+
+    public void setM3u(String m3u) {
+        this.m3u = m3u;
+    }
+
     @Override
     protected Task<ExtInfoList> createTask() {
         return new Task<ExtInfoList>() {
             @Override
             protected ExtInfoList call() throws Exception {
-                String m3u = Propriedades.instancia.getM3u();
                 return Parser.parserExtM3u8(getInputStreamByM3U(m3u));
             }
         };

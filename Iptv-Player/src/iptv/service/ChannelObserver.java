@@ -42,7 +42,7 @@ public class ChannelObserver extends Service<String> {
                     Channel canal = canais.get(index);
                     int status = -1;
                     try {
-                        URL url = new URL(canal.getCanal().getCanalURL());
+                        URL url = new URL(canal.getChannel().getCanalURL());
                         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                         connection.setRequestProperty("User-Agent", "Mozilla/5.0 Firefox/26.0");
                         while (connection.getResponseCode() == 301 || connection.getResponseCode() == 302) {
@@ -57,7 +57,7 @@ public class ChannelObserver extends Service<String> {
                     if (on) online++;
                     else offline++;
                     updateMessage(String.format("%s: %s | %d/%d Online: %d Offline: %d",
-                            canal.getCanal().getCanalNome(),
+                            canal.getChannel().getCanalNome(),
                             on ? "Online" : "Offline",
                             index + 1,
                             canais.size(),
