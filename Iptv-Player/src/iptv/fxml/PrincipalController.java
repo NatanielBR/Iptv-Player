@@ -21,6 +21,7 @@ import com.nataniel.ExtInfoList;
 import com.nataniel.Parser;
 import iptv.IPTVPlayer;
 import iptv.Propriedades;
+import iptv.player.Player;
 import iptv.service.Channel;
 import iptv.service.ChannelObserver;
 import iptv.service.ChannelUpdate;
@@ -34,7 +35,6 @@ import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.HBox;
@@ -43,6 +43,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -72,6 +73,12 @@ public class PrincipalController implements Initializable {
     //Objetos da classe
     private ExtInfoList CANAIS = null;
     private List<Channel> canais = null;
+    private Channel canalSelecionado = null;
+    private ChannelObserver observer;
+    private ChannelUpdate update;
+    private List<Button> GRUPOS = null;
+    private boolean isLocal = false;
+    private String urlUltimo = null;
     /**
      * Açao do botao grupo.
      */
@@ -89,10 +96,6 @@ public class PrincipalController implements Initializable {
         Canais.scrollTo(canal);
         Canais.getSelectionModel().select(canal);
     };
-    private Channel canalSelecionado = null;
-    private ChannelObserver observer;
-    private ChannelUpdate update;
-    private List<Button> GRUPOS = null;
     /**
      * Utilizado para fazer a busca de grupos
      */
@@ -103,15 +106,50 @@ public class PrincipalController implements Initializable {
         Grupos.getSelectionModel().select(ob);
     };
 
-    @FXML
+    /**
+     * acao de troocar de lista
+     *
+     * @param evt
+     */
     private void handleTrocaRapida(ActionEvent evt) {
         String m3u = getM3ULink();
         Propriedades.instancia.setM3u(m3u);
         if (update.isRunning()) update.cancel();
         update.setM3u(Propriedades.instancia.getM3u());
         update.restart();
+        isLocal = false;
     }
 
+    /**
+     * acaao de trocar para ultima lista
+     *
+     * @param evt
+     */
+    private void handleUltimaLista(ActionEvent evt) {
+        String m3u = urlUltimo;
+        Propriedades.instancia.setM3u(m3u);
+        if (update.isRunning()) update.cancel();
+        update.setM3u(urlUltimo);
+        update.restart();
+        isLocal = false;
+    }
+
+    /**
+     * acao para abrir um canal
+     *
+     * @param evt
+     */
+    private void handleAbrirCanal(ActionEvent evt) {
+        if (!player.get()) {
+            Player play = new Player(canalSelecionado.getChannel().getCanalURL(), player);
+            play.setVisible(true);
+        }
+    }
+
+    /**
+     * acao para abrir a lista local
+     * @param evt
+     */
     private void handleTrocaLocal(ActionEvent evt) {
         String m3u = Propriedades.instancia.getM3uLocal();
         File f = null;
@@ -123,12 +161,14 @@ public class PrincipalController implements Initializable {
         update.setM3u(m3u);
         if (update.isRunning()) update.cancel();
         update.restart();
+        isLocal = true;
+        urlUltimo = Propriedades.instancia.getM3u();
     }
 
-    private void handleAbrirCanal(MouseEvent evt) {
-        canalSelecionado = Canais.getSelectionModel().getSelectedItem();
-    }
-
+    /**
+     * acao de salvar o canal na lista local
+     * @param evt
+     */
     private void handleSalvarCanal(ActionEvent evt) {
         ExtInfoEditor editor = new ExtInfoEditor(canalSelecionado.getChannel());
         FXMLLoader loader = new FXMLLoader();
@@ -146,6 +186,7 @@ public class PrincipalController implements Initializable {
                 String m3u = Propriedades.instancia.getM3uLocal();
                 if (m3u == null) {
                     IPTVPlayer.error("Arquivo não existe.\nPrimeiro troque pelo menos uma vez para a Lista local.", PrincipalController.class);
+                    return;
                 }
                 ExtInfoList infoList = Parser.parserExtM3u8(new FileInputStream(Propriedades.instancia.getM3uLocal()));
                 infoList.getAllExtInfo().add(newinfo);
@@ -157,6 +198,23 @@ public class PrincipalController implements Initializable {
             System.exit(3);
         }
 
+    }
+
+    /**
+     * acao para remover um canal na lista local
+     *
+     * @param evt
+     */
+    private void handleRemoverCanal(ActionEvent evt) {
+        ExtInfo info = canalSelecionado.getChannel();
+        CANAIS.getAllExtInfo().remove(info);
+        try {
+            Parser.ParserExtInfoListToFile(CANAIS, new File(Propriedades.instancia.getM3uLocal()));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        update.setM3u(Propriedades.instancia.getM3uLocal());
+        update.restart();
     }
 
     /**
@@ -189,6 +247,10 @@ public class PrincipalController implements Initializable {
         return m3u;
     }
 
+    /**
+     * Metodo para injetar uma ExtInfo na janela.
+     * @param infoList
+     */
     private void injectExtInfoListInInterface(ExtInfoList infoList) {
         CANAIS = infoList;
         canais = infoList.getAllExtInfo().stream().map(Channel::new).collect(Collectors.toList());
@@ -215,42 +277,53 @@ public class PrincipalController implements Initializable {
             status.setText(c);
             updateCanais();
         });
-//        observer.start();
+        observer.start();
     }
 
+    /**
+     * Metodo para atualizar graficamente o ListView.
+     */
     private void updateCanais() {
         ObservableList<Channel> canaiss = Canais.getItems();
         Canais.setItems(null);
         Canais.setItems(canaiss);
     }
 
+    /**
+     * Metodo para criar o contextmenu do canal.
+     * @return
+     */
     private ContextMenu contextMenuForCanais() {
         ContextMenu contextMenu = new ContextMenu();
-        MenuItem listaRapido = new MenuItem("Trocar de lista");
-        MenuItem listaLocal = new MenuItem("Trocar para lista local");
-        MenuItem selecao = new MenuItem("Limpar selecionado");
+        //MenuItem
+        MenuItem novaLista = new MenuItem("Abrir nova lista");
+        MenuItem ultimaLista = new MenuItem("Abrir lista externa");
+        MenuItem listaLocal = new MenuItem("Abrir lista local");
+        MenuItem abrirMenu = new MenuItem("Abrir Canal");
         MenuItem salvarMenu = new MenuItem("Salvar Canal");
-        contextMenu.getItems().add(listaRapido);
+        MenuItem removerMenu = new MenuItem("Excluir Canal");
+        //adicionando na ordem
+        contextMenu.getItems().add(novaLista);
+        contextMenu.getItems().add(ultimaLista);
         contextMenu.getItems().add(listaLocal);
-        contextMenu.getItems().add(selecao);
         contextMenu.getItems().add(new SeparatorMenuItem());
+        contextMenu.getItems().add(abrirMenu);
         contextMenu.getItems().add(salvarMenu);
+        contextMenu.getItems().add(removerMenu);
+        //Acoes
         salvarMenu.setOnAction(this::handleSalvarCanal);
-        listaRapido.setOnAction(this::handleTrocaRapida);
+        abrirMenu.setOnAction(this::handleAbrirCanal);
+        ultimaLista.setOnAction(this::handleUltimaLista);
+        novaLista.setOnAction(this::handleTrocaRapida);
         listaLocal.setOnAction(this::handleTrocaLocal);
-        selecao.setOnAction(a -> Canais.getSelectionModel().clearSelection());
+        removerMenu.setOnAction(this::handleRemoverCanal);
+        //Exibir ou ocultar alguns itens.
         contextMenu.showingProperty().addListener(a -> {
             salvarMenu.setVisible(canalSelecionado != null);
+            removerMenu.setVisible(isLocal);
+            ultimaLista.setVisible(isLocal);
+            listaLocal.setVisible(!isLocal);
         });
-        return contextMenu;
-    }
-
-    private ContextMenu contextMenuForCanal() {
-        ContextMenu contextMenu = contextMenuForCanais();
-        SeparatorMenuItem separador = new SeparatorMenuItem();
-        MenuItem salvarMenu = new MenuItem("Salvar Canal");
-        contextMenu.getItems().add(separador);
-        contextMenu.getItems().add(salvarMenu);
         return contextMenu;
     }
 
@@ -259,7 +332,6 @@ public class PrincipalController implements Initializable {
         entCanal.setOnAction(canalBusca);
         entGrupo.setOnAction(grupoBusca);
         player = new AtomicBoolean(false);
-//        canalMenu = contextMenuForCanal();
 
         String m3u = Propriedades.instancia.getM3u();
         if (m3u == null) {
@@ -281,50 +353,7 @@ public class PrincipalController implements Initializable {
             Canais.setContextMenu(contextMenuForCanais());
             Canais.getSelectionModel().selectedItemProperty().addListener((a, b, c) -> canalSelecionado = c);
             Canais.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
-//            Canais.setOnMouseClicked(this::handleAbrirCanal);
             Canais.setCellFactory(new CallBackCanal());
-//            Canais.setCellFactory((param) -> new ListCell<Channel>() {
-//                @Override
-//                protected void updateItem(Channel item, boolean empty) {
-//                    if (item != null) {
-//                        ExtInfo ext = item.getChannel();
-//                        setOnMouseClicked(a->{
-////                            boolean selec = param.getSelectionModel().isSelected(getIndex());
-//                            param.getSelectionModel().select(getIndex());
-//                        });
-////                        setOnMouseClicked((event) -> {
-////                            if (event.getButton() == MouseButton.SECONDARY) {
-//////                                if (canalMenu.isShowing()) {
-//////                                    canalMenu.hide();
-//////                                } else {
-//////                                    canalMenu.show(this, event.getScreenX(), event.getScreenY());
-//////                                }
-//////                                param.getContextMenu().show(this, event.getScreenX(), event.getScreenY());
-////                                return;
-////                            } else {
-////                                if (!isSelected()) {
-////                                    param.getSelectionModel().clearSelection();
-////                                    param.getSelectionModel().select(getIndex());
-////                                } else if (!player.get()) {
-////                                    Player play = new Player(ext.getCanalURL(), player);
-////                                    player.set(true);
-////                                    play.setVisible(true);
-////                                }
-////                            }
-////
-////                        });
-//                        setText(ext.getCanalNome());
-//                        int state;
-//                        if (item.isChanged()) {
-//                            state = item.isAlive() ? 0 : 2;
-//                        } else {
-//                            state = 1;
-//                        }
-//                        setGraphic(new ImageView(String.format("iptv/res/%d.png", state)));
-//                    }
-//                }
-//
-//            });
         } catch (Exception ex) {
             IPTVPlayer.error(ex, getClass());
         }
