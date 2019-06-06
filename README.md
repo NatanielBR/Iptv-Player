@@ -1,14 +1,4 @@
 # Iptv-Player
-Player iptv feito em java
+Player iptv feito em java usando como Parser o [M3U8Parser](https://github.com/NatanielBR/M3U8Parser).
 
-Como usar :
-
-1 - Extraia o arquivo .zip, recomendo uma pasta somente para para esses arquivos.
-
-2 - Execute o arquivo Iptv-Player.jar .
-
-3 - Como sera a primeira vez, informe o arquivo .m3u, onde irá ter a sua playlist.
-
-4 - Após a escolha, surgira duas colunas, uma contendo os grupos dos canais e a propria lista de canais.
-
-5 - Escolha o canal e de um click nele.
+Nota: O programa irá criar outros arquivos, recomendo coloca-lo em uma pasta especifica para fins de organização.
