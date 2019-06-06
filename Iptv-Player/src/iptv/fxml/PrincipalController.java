@@ -156,8 +156,15 @@ public class PrincipalController implements Initializable {
         if (m3u == null) {
             m3u = "local.m3u";
             Propriedades.instancia.setM3uLocal(m3u);
+            f = new File(m3u);
+            try {
+                f.createNewFile();
+            } catch (IOException e) {
+                IPTVPlayer.error(e, getClass());
+            }
+        } else {
+            f = new File(m3u);
         }
-        f = new File(m3u);
         update.setM3u(m3u);
         if (update.isRunning()) update.cancel();
         update.restart();
@@ -285,8 +292,15 @@ public class PrincipalController implements Initializable {
      */
     private void updateCanais() {
         ObservableList<Channel> canaiss = Canais.getItems();
+        int i;
+        if (Canais.getSelectionModel().isEmpty()) {
+            i = -1;
+        } else {
+            i = Canais.getSelectionModel().getSelectedIndex();
+        }
         Canais.setItems(null);
         Canais.setItems(canaiss);
+        if (i != -1) Canais.getSelectionModel().select(i);
     }
 
     /**
