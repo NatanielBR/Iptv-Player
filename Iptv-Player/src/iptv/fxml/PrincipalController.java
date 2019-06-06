@@ -91,10 +91,17 @@ public class PrincipalController implements Initializable {
      */
     private final EventHandler<ActionEvent> canalBusca = (a) -> {
         List<ExtInfo> lista = CANAIS.getAllExtInfo();
-        Channel canal = canais.stream().filter((ab) -> StringUtils.containsIgnoreCase(ab.getChannel().getCanalNome(), entCanal.getText())).findFirst().orElse(null);
-        if (canal == null) return;
-        Canais.scrollTo(canal);
-        Canais.getSelectionModel().select(canal);
+        int index = 0;
+        for (int i = 0; i < canais.size(); i++) {
+            Channel ab = canais.get(i);
+            if (StringUtils.containsIgnoreCase(ab.getChannel().getCanalNome(), entCanal.getText())) {
+                index = i;
+                break;
+            }
+        }
+//        Channel canal = canais.stream().filter((ab) -> StringUtils.containsIgnoreCase(ab.getChannel().getCanalNome(), entCanal.getText())).findFirst().orElse(null);
+        Canais.scrollTo(index);
+        Canais.getSelectionModel().select(index);
     };
     /**
      * Utilizado para fazer a busca de grupos
