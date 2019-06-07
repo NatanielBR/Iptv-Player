@@ -99,7 +99,6 @@ public class PrincipalController implements Initializable {
                 break;
             }
         }
-//        Channel canal = canais.stream().filter((ab) -> StringUtils.containsIgnoreCase(ab.getChannel().getCanalNome(), entCanal.getText())).findFirst().orElse(null);
         Canais.scrollTo(index);
         Canais.getSelectionModel().select(index);
     };
@@ -120,11 +119,12 @@ public class PrincipalController implements Initializable {
      */
     private void handleTrocaRapida(ActionEvent evt) {
         String m3u = getM3ULink();
-        Propriedades.instancia.setM3u(m3u);
-        if (update.isRunning()) update.cancel();
-        update.setM3u(Propriedades.instancia.getM3u());
-        update.restart();
-        isLocal = false;
+        if (m3u != null) {
+            Propriedades.instancia.setM3u(m3u);
+            update.setM3u(Propriedades.instancia.getM3u());
+            update.restart();
+            isLocal = false;
+        }
     }
 
     /**
@@ -135,7 +135,6 @@ public class PrincipalController implements Initializable {
     private void handleUltimaLista(ActionEvent evt) {
         String m3u = urlUltimo;
         Propriedades.instancia.setM3u(m3u);
-        if (update.isRunning()) update.cancel();
         update.setM3u(urlUltimo);
         update.restart();
         isLocal = false;
@@ -154,7 +153,44 @@ public class PrincipalController implements Initializable {
     }
 
     /**
+     * acao para editar um canal
+     *
+     * @param evt
+     */
+    private void handleEditarCanal(ActionEvent evt) {
+        ExtInfo selec = canalSelecionado.getChannel();
+        ExtInfoEditor editor = new ExtInfoEditor(selec);
+        FXMLLoader loader = new FXMLLoader();
+        loader.setController(editor);
+        try {
+            Parent par = loader.load(editor.getClass().getResourceAsStream("ExtInfoEditor.fxml"));
+            Alert alert = new Alert(Alert.AlertType.NONE);
+            DialogPane pane = new DialogPane();
+            pane.setContent(par);
+            alert.setDialogPane(pane);
+            alert.getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+            ButtonType type = alert.showAndWait().get();
+            if (type == ButtonType.OK) {
+                ExtInfo newinfo = editor.getExtInfo();
+                String m3u = Propriedades.instancia.getM3uLocal();
+
+                CANAIS.getAllExtInfo().remove(selec);
+                CANAIS.getAllExtInfo().add(newinfo);
+                Parser.ParserExtInfoListToFile(CANAIS, new File(m3u));
+
+                update.setM3u(m3u);
+                update.restart();
+            }
+        } catch (IOException e) {
+            IPTVPlayer.error(e, PrincipalController.class);
+            e.printStackTrace();
+            System.exit(3);
+        }
+    }
+
+    /**
      * acao para abrir a lista local
+     *
      * @param evt
      */
     private void handleTrocaLocal(ActionEvent evt) {
@@ -173,7 +209,6 @@ public class PrincipalController implements Initializable {
             f = new File(m3u);
         }
         update.setM3u(m3u);
-        if (update.isRunning()) update.cancel();
         update.restart();
         isLocal = true;
         urlUltimo = Propriedades.instancia.getM3u();
@@ -181,6 +216,7 @@ public class PrincipalController implements Initializable {
 
     /**
      * acao de salvar o canal na lista local
+     *
      * @param evt
      */
     private void handleSalvarCanal(ActionEvent evt) {
@@ -257,12 +293,12 @@ public class PrincipalController implements Initializable {
         TextInputDialog diag = new TextInputDialog();
         diag.setHeaderText("Informe uma URL");
         String m3u = diag.showAndWait().orElse(null);
-        if (m3u == null) System.exit(0);
         return m3u;
     }
 
     /**
      * Metodo para injetar uma ExtInfo na janela.
+     *
      * @param infoList
      */
     private void injectExtInfoListInInterface(ExtInfoList infoList) {
@@ -312,6 +348,7 @@ public class PrincipalController implements Initializable {
 
     /**
      * Metodo para criar o contextmenu do canal.
+     *
      * @return
      */
     private ContextMenu contextMenuForCanais() {
@@ -321,6 +358,7 @@ public class PrincipalController implements Initializable {
         MenuItem ultimaLista = new MenuItem("Abrir lista externa");
         MenuItem listaLocal = new MenuItem("Abrir lista local");
         MenuItem abrirMenu = new MenuItem("Abrir Canal");
+        MenuItem editarMenu = new MenuItem("Editar Canal");
         MenuItem salvarMenu = new MenuItem("Salvar Canal");
         MenuItem removerMenu = new MenuItem("Excluir Canal");
         //adicionando na ordem
@@ -329,6 +367,7 @@ public class PrincipalController implements Initializable {
         contextMenu.getItems().add(listaLocal);
         contextMenu.getItems().add(new SeparatorMenuItem());
         contextMenu.getItems().add(abrirMenu);
+        contextMenu.getItems().add(editarMenu);
         contextMenu.getItems().add(salvarMenu);
         contextMenu.getItems().add(removerMenu);
         //Acoes
@@ -336,12 +375,16 @@ public class PrincipalController implements Initializable {
         abrirMenu.setOnAction(this::handleAbrirCanal);
         ultimaLista.setOnAction(this::handleUltimaLista);
         novaLista.setOnAction(this::handleTrocaRapida);
+        editarMenu.setOnAction(this::handleEditarCanal);
         listaLocal.setOnAction(this::handleTrocaLocal);
         removerMenu.setOnAction(this::handleRemoverCanal);
         //Exibir ou ocultar alguns itens.
         contextMenu.showingProperty().addListener(a -> {
             salvarMenu.setVisible(canalSelecionado != null);
-            removerMenu.setVisible(isLocal);
+            if (canalSelecionado != null) {
+                removerMenu.setVisible(isLocal);
+                editarMenu.setVisible(isLocal);
+            }
             ultimaLista.setVisible(isLocal);
             listaLocal.setVisible(!isLocal);
         });
@@ -357,6 +400,7 @@ public class PrincipalController implements Initializable {
         String m3u = Propriedades.instancia.getM3u();
         if (m3u == null) {
             m3u = getM3ULink();
+            if (m3u == null) System.exit(0);
             Propriedades.instancia.setM3u(m3u);
         }
         try {

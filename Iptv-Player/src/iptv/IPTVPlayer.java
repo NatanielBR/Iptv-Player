@@ -76,6 +76,7 @@ public class IPTVPlayer extends Application {
         Scene scene = new Scene(root);
         stage.setResizable(false);
         stage.setScene(scene);
+        stage.setTitle("Iptv Player 2.1-15");
         stage.setOnCloseRequest((a) -> {
             if (PrincipalController.player.get()) {
                 Alert ale = new Alert(Alert.AlertType.WARNING);

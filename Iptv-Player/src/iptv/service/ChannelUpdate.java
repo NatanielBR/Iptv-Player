@@ -48,6 +48,7 @@ public class ChannelUpdate extends Service<ExtInfoList> {
         return new Task<ExtInfoList>() {
             @Override
             protected ExtInfoList call() throws Exception {
+                updateTitle("Channel Update");
                 return Parser.parserExtM3u8(getInputStreamByM3U(m3u));
             }
         };
