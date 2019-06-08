@@ -41,21 +41,36 @@ public class ExtInfoEditor implements Initializable {
         this.extInfo = extInfo;
     }
 
+    public ExtInfoEditor() {
+        this.extInfo = null;
+    }
+
     public ExtInfo getExtInfo() {
         ExtInfoBuilder bu = new ExtInfoBuilder();
-        bu.setGrupo(grupoDoCanalField.getText());
-        bu.setCanalNome(nomeDoCanalField.getText());
-        bu.setLogoURL(logoDoCanalField.getText());
-        bu.setId(idDoCanalField.getText());
-        bu.setCanalURL(extInfo.getCanalURL());
+        if (extInfo == null) {
+            bu.setGrupo(grupoDoCanalField.getText());
+        } else {
+            bu.setGrupo(grupoDoCanalField.getText());
+            bu.setCanalNome(nomeDoCanalField.getText());
+            bu.setLogoURL(logoDoCanalField.getText());
+            bu.setId(idDoCanalField.getText());
+            bu.setCanalURL(extInfo.getCanalURL());
+        }
         return bu.builder();
     }
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        grupoDoCanalField.setText(extInfo.getGrupo());
-        nomeDoCanalField.setText(extInfo.getCanalNome());
-        logoDoCanalField.setText(extInfo.getLogoURL());
-        idDoCanalField.setText(extInfo.getId());
+        if (extInfo == null) {
+            grupoDoCanalField.setText("");
+            nomeDoCanalField.setDisable(true);
+            logoDoCanalField.setDisable(true);
+            idDoCanalField.setDisable(true);
+        } else {
+            grupoDoCanalField.setText(extInfo.getGrupo());
+            nomeDoCanalField.setText(extInfo.getCanalNome());
+            logoDoCanalField.setText(extInfo.getLogoURL());
+            idDoCanalField.setText(extInfo.getId());
+        }
     }
 }

@@ -25,6 +25,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class Channel {
     private AtomicBoolean alive;
     private boolean changed;
+
+    public void setCanal(ExtInfo canal) {
+        this.canal = canal;
+    }
+
     private ExtInfo canal;
 
     public Channel(ExtInfo canal) {

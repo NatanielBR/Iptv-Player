@@ -18,6 +18,7 @@
 package iptv.fxml;
 
 import com.nataniel.Parser;
+import com.nataniel.builder.ExtInfoBuilder;
 import com.nataniel.inter.ExtInfo;
 import com.nataniel.list.ExtInfoList;
 import iptv.IPTVPlayer;
@@ -88,7 +89,7 @@ public class TabController implements Initializable {
     }
 
     private final String M3U;
-    private Channel canalSelecionado = null;
+    private List<Channel> canalSelecionado = null;
     private ChannelObserver observer;
     private ChannelUpdate update;
     private List<Button> GRUPOS = null;
@@ -199,18 +200,24 @@ public class TabController implements Initializable {
      * Metodo para atualizar graficamente o ListView.
      */
     private void updateCanais() {
+        if (Canais.getContextMenu().isShowing()) return;
         ObservableList<Channel> canaiss = Canais.getItems();
-        int i;
-        if (Canais.getSelectionModel().isEmpty()) {
-            i = -1;
-        } else {
-            i = Canais.getSelectionModel().getSelectedIndex();
-        }
         Canais.setItems(null);
         Canais.setItems(canaiss);
-        if (i != -1) Canais.getSelectionModel().select(i);
+
     }
 
+    private Alert getAlertEditor(ExtInfoEditor editor) throws IOException {
+        FXMLLoader loader = new FXMLLoader();
+        loader.setController(editor);
+        Parent par = loader.load(editor.getClass().getResourceAsStream("ExtInfoEditor.fxml"));
+        Alert alert = new Alert(Alert.AlertType.NONE);
+        DialogPane pane = new DialogPane();
+        pane.setContent(par);
+        alert.setDialogPane(pane);
+        alert.getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        return alert;
+    }
     private void handleAutoAtualiar(ActionEvent evt) {
         CheckMenuItem check = (CheckMenuItem) evt.getSource();
         isAllow = check.isSelected();
@@ -223,7 +230,7 @@ public class TabController implements Initializable {
      */
     private void handleAbrirCanal(ActionEvent evt) {
         if (!PrincipalController.player.get()) {
-            player = new Player(canalSelecionado.getChannel().getCanalURL(), PrincipalController.player);
+            player = new Player(canalSelecionado.get(0).getChannel().getCanalURL(), PrincipalController.player);
             PrincipalController.player.set(true);
             player.setVisible(true);
         } else {
@@ -237,34 +244,51 @@ public class TabController implements Initializable {
      * @param evt
      */
     private void handleEditarCanal(ActionEvent evt) {
-        if (canalSelecionado == null) return;
-        ExtInfo selec = canalSelecionado.getChannel();
-        ExtInfoEditor editor = new ExtInfoEditor(selec);
-        FXMLLoader loader = new FXMLLoader();
-        loader.setController(editor);
-        try {
-            Parent par = loader.load(editor.getClass().getResourceAsStream("ExtInfoEditor.fxml"));
-            Alert alert = new Alert(Alert.AlertType.NONE);
-            DialogPane pane = new DialogPane();
-            pane.setContent(par);
-            alert.setDialogPane(pane);
-            alert.getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
-            ButtonType type = alert.showAndWait().get();
-            if (type == ButtonType.OK) {
-                ExtInfo newinfo = editor.getExtInfo();
-                String m3u = Propriedades.instancia.getM3uLocal();
-
-                CANAIS.getAllExtInfo().remove(selec);
-                CANAIS.getAllExtInfo().add(newinfo);
-                Parser.ParserExtInfoListToFile(CANAIS, new File(m3u));
-
-                update.setM3u(m3u);
-                update.restart();
+        ExtInfo newinfo;
+        ExtInfoEditor editor;
+        if (canalSelecionado.size() > 1) {
+            ObservableList<Channel> channels = Canais.getSelectionModel().getSelectedItems();
+            editor = new ExtInfoEditor();
+            try {
+                Alert alert = getAlertEditor(editor);
+                if (alert.showAndWait().get() == ButtonType.OK) {
+                    List<ExtInfo> info = new ArrayList<>();
+                    String grupo = editor.getExtInfo().getGrupo();
+                    channels.forEach((a) -> {
+                        ExtInfo temp = a.getChannel();
+                        ExtInfoBuilder bu = new ExtInfoBuilder();
+                        bu.setCanalNome(temp.getCanalNome());
+                        bu.setCanalURL(temp.getCanalURL());
+                        bu.setId(temp.getId());
+                        bu.setGrupo(grupo);
+                        info.add(bu.builder());
+                    });
+                    Parser.ParserExtInfoListToFile(new ExtInfoList(info), new File(Propriedades.instancia.getM3uLocal()));
+                }
+            } catch (IOException e) {
+                IPTVPlayer.error(e, getClass());
             }
-        } catch (IOException e) {
-            IPTVPlayer.error(e, PrincipalController.class);
-            e.printStackTrace();
-            System.exit(3);
+        } else {
+            ExtInfo selec = canalSelecionado.get(0).getChannel();
+            try {
+                editor = new ExtInfoEditor(selec);
+                Alert alert = getAlertEditor(editor);
+                if (alert.showAndWait().get() == ButtonType.OK) {
+                    newinfo = editor.getExtInfo();
+                    String m3u = Propriedades.instancia.getM3uLocal();
+
+                    CANAIS.getAllExtInfo().remove(selec);
+                    CANAIS.getAllExtInfo().add(newinfo);
+                    Parser.ParserExtInfoListToFile(CANAIS, new File(m3u));
+
+                    update.setM3u(m3u);
+                    update.restart();
+                }
+            } catch (IOException e) {
+                IPTVPlayer.error(e, PrincipalController.class);
+                e.printStackTrace();
+                System.exit(3);
+            }
         }
     }
 
@@ -274,7 +298,7 @@ public class TabController implements Initializable {
      * @param evt
      */
     private void handleSalvarCanal(ActionEvent evt) {
-        ExtInfoEditor editor = new ExtInfoEditor(canalSelecionado.getChannel());
+        ExtInfoEditor editor = new ExtInfoEditor(canalSelecionado.get(0).getChannel());
         FXMLLoader loader = new FXMLLoader();
         loader.setController(editor);
         try {
@@ -315,8 +339,7 @@ public class TabController implements Initializable {
      * @param evt
      */
     private void handleRemoverCanal(ActionEvent evt) {
-        ExtInfo info = canalSelecionado.getChannel();
-        CANAIS.getAllExtInfo().remove(info);
+        System.out.println(CANAIS.getAllExtInfo().removeAll(canalSelecionado.stream().map((a) -> a.getChannel()).collect(Collectors.toList())));
         try {
             Parser.ParserExtInfoListToFile(CANAIS, new File(Propriedades.instancia.getM3uLocal()));
         } catch (FileNotFoundException e) {
@@ -393,10 +416,16 @@ public class TabController implements Initializable {
         //Exibir ou ocultar alguns itens.
         autoAtualizar.setSelected(true);
         contextMenu.showingProperty().addListener(a -> {
-            if (canalSelecionado != null) {
+            if (Canais.getSelectionModel().getSelectedItems().size() == 1) {
+                abrirMenu.setVisible(true);
                 salvarMenu.setVisible(!isLocal);
                 removerMenu.setVisible(isLocal);
                 editarMenu.setVisible(isLocal);
+            } else if (Canais.getSelectionModel().getSelectedItems().size() > 1) {
+                editarMenu.setVisible(true);
+                salvarMenu.setVisible(false);
+                removerMenu.setVisible(true);
+                abrirMenu.setVisible(false);
             }
         });
         return contextMenu;
@@ -409,8 +438,11 @@ public class TabController implements Initializable {
         entGrupo.setOnAction(grupoBusca);
 
         Canais.setContextMenu(contextMenuForCanais());
-        Canais.getSelectionModel().selectedItemProperty().addListener((a, b, c) -> canalSelecionado = c);
-        Canais.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
+        Canais.getSelectionModel().selectedItemProperty().addListener((a, b, c) -> {
+            canalSelecionado = Canais.getSelectionModel().getSelectedItems();
+
+        });
+        Canais.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         Canais.setCellFactory(new CallBackCanal());
 
         update = new ChannelUpdate(M3U);
