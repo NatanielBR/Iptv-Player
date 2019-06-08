@@ -60,9 +60,19 @@ public class PrincipalController implements Initializable {
 
     private Tab createTab(String m3uLocal) throws IOException {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("tab.fxml"));
-        local = new TabController(m3uLocal);
+        TabController local = new TabController(m3uLocal);
         loader.setController(local);
         Tab tb = loader.load();
+        tb.setUserData(local);
+        tb.setOnCloseRequest((a) -> {
+            local.closeTab();
+            List<String> lista = new ArrayList<>();
+            for (String m : Propriedades.instancia.getM3u()) {
+                lista.add(m);
+            }
+            lista.remove(local.getM3U());
+            Propriedades.instancia.setM3u(lista.toArray(new String[0]));
+        });
         tb.setText("Local");
         return tb;
     }
@@ -128,7 +138,7 @@ public class PrincipalController implements Initializable {
             for (String m : m3u) {
 
                 Tab tb = createTab(m);
-                tb.setText("Lista " + (i + 1));
+                tb.setText("Lista " + (i++));
                 TabManager.getTabs().add(tb);
             }
             String m3uLocal = Propriedades.instancia.getM3uLocal();

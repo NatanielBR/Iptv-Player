@@ -80,6 +80,13 @@ public class TabController implements Initializable {
     private List<Channel> canais = null;
     private static List<TabController> controllers = null;
     private final boolean isLocal;
+
+    public static void closeAllTab() {
+        controllers.forEach((a) -> {
+            a.closeTab();
+        });
+    }
+
     private final String M3U;
     private Channel canalSelecionado = null;
     private ChannelObserver observer;
@@ -104,12 +111,14 @@ public class TabController implements Initializable {
         timer.schedule(getTimeTask(), 0, (isLocal ? 5000 : 10000));
     }
 
-    public static void closeAllTab() {
-        controllers.forEach((a) -> {
-            a.update.cancel();
-            a.observer.cancel();
-            a.timer.cancel();
-        });
+    public String getM3U() {
+        return M3U;
+    }
+
+    public void closeTab() {
+        update.cancel();
+        observer.cancel();
+        timer.cancel();
     }
 
     private TimerTask getTimeTask() {
