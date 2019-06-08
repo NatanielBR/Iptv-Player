@@ -26,6 +26,7 @@ import iptv.player.Player;
 import iptv.service.Channel;
 import iptv.service.ChannelObserver;
 import iptv.service.ChannelUpdate;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Worker;
@@ -47,15 +48,12 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.ResourceBundle;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class TabController implements Initializable {
 
-    private final boolean isLocal;
-    private final String M3U;
+
     @FXML
     private HBox hbox;
 
@@ -80,6 +78,53 @@ public class TabController implements Initializable {
     //Objetos da classe
     private ExtInfoList CANAIS = null;
     private List<Channel> canais = null;
+    private static List<TabController> controllers = null;
+    private final boolean isLocal;
+    private final String M3U;
+    private Channel canalSelecionado = null;
+    private ChannelObserver observer;
+    private ChannelUpdate update;
+    private List<Button> GRUPOS = null;
+    private boolean isloaded = false;
+    private boolean isAllow = true;
+    private Timer timer;
+
+    public TabController(String m3U) {
+        this(m3U, false);
+    }
+
+    public TabController(String m3U, boolean local) {
+        if (controllers == null) {
+            controllers = new ArrayList<>();
+        }
+        controllers.add(this);
+        M3U = m3U;
+        isLocal = local;
+        timer = new Timer("timer");
+        timer.schedule(getTimeTask(), 0, (isLocal ? 5000 : 10000));
+    }
+
+    public static void closeAllTab() {
+        controllers.forEach((a) -> {
+            a.update.cancel();
+            a.observer.cancel();
+            a.timer.cancel();
+        });
+    }
+
+    private TimerTask getTimeTask() {
+        return new TimerTask() {
+            @Override
+            public void run() {
+                Platform.runLater(() -> {
+                    if (isloaded && isAllow) {
+                        System.out.println(M3U);
+                        update.restart();
+                    }
+                });
+            }
+        };
+    }
     /**
      * Utilizado pra fazer a busca de canal
      */
@@ -103,10 +148,6 @@ public class TabController implements Initializable {
         Button button = (Button) e.getSource();
         novosCanais(canais.stream().filter(a -> a.getChannel().getGrupo().equals(button.getText())).collect(Collectors.toList()));
     };
-    private Channel canalSelecionado = null;
-    private ChannelObserver observer;
-    private ChannelUpdate update;
-    private List<Button> GRUPOS = null;
     /**
      * Utilizado para fazer a busca de grupos
      */
@@ -117,15 +158,7 @@ public class TabController implements Initializable {
         Grupos.getSelectionModel().select(ob);
     };
 
-    public TabController(String m3U) {
-        M3U = m3U;
-        isLocal = false;
-    }
 
-    public TabController(String m3U, boolean local) {
-        M3U = m3U;
-        isLocal = local;
-    }
 
     /**
      * Metodo para facilitar a inserção da lista de canais
@@ -164,6 +197,10 @@ public class TabController implements Initializable {
         if (i != -1) Canais.getSelectionModel().select(i);
     }
 
+    private void handleAutoAtualiar(ActionEvent evt) {
+        CheckMenuItem check = (CheckMenuItem) evt.getSource();
+        isAllow = check.isSelected();
+    }
     /**
      * acao para abrir um canal
      *
@@ -182,6 +219,7 @@ public class TabController implements Initializable {
      * @param evt
      */
     private void handleEditarCanal(ActionEvent evt) {
+        if (canalSelecionado == null) return;
         ExtInfo selec = canalSelecionado.getChannel();
         ExtInfoEditor editor = new ExtInfoEditor(selec);
         FXMLLoader loader = new FXMLLoader();
@@ -300,6 +338,11 @@ public class TabController implements Initializable {
             status.setText(c);
             updateCanais();
         });
+        observer.stateProperty().addListener((a, b, c) -> {
+            if (c.equals(Worker.State.SUCCEEDED)) {
+                isloaded = true;
+            }
+        });
         observer.start();
     }
 
@@ -315,17 +358,21 @@ public class TabController implements Initializable {
         MenuItem editarMenu = new MenuItem("Editar Canal");
         MenuItem salvarMenu = new MenuItem("Salvar Canal");
         MenuItem removerMenu = new MenuItem("Excluir Canal");
+        CheckMenuItem autoAtualizar = new CheckMenuItem("Auto Atualizar");
         //adicionando na ordem
         contextMenu.getItems().add(abrirMenu);
         contextMenu.getItems().add(editarMenu);
         contextMenu.getItems().add(salvarMenu);
         contextMenu.getItems().add(removerMenu);
+        contextMenu.getItems().add(autoAtualizar);
         //Acoes
         salvarMenu.setOnAction(this::handleSalvarCanal);
         abrirMenu.setOnAction(this::handleAbrirCanal);
         editarMenu.setOnAction(this::handleEditarCanal);
         removerMenu.setOnAction(this::handleRemoverCanal);
+        autoAtualizar.setOnAction(this::handleAutoAtualiar);
         //Exibir ou ocultar alguns itens.
+        autoAtualizar.setSelected(true);
         contextMenu.showingProperty().addListener(a -> {
             if (canalSelecionado != null) {
                 salvarMenu.setVisible(!isLocal);
@@ -358,6 +405,7 @@ public class TabController implements Initializable {
         update.stateProperty().addListener((a, b, c) -> {
             if (c.equals(Worker.State.RUNNING)) {
                 status.setText("Carregando lista...");
+                isloaded = false;
             } else if (c.equals(Worker.State.FAILED)) {
                 IPTVPlayer.error(update.getException().toString(), getClass());
                 status.setText("Erro ao carregar a lista.");

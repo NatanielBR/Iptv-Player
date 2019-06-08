@@ -18,6 +18,7 @@
 package iptv;
 
 import iptv.fxml.PrincipalController;
+import iptv.fxml.TabController;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
@@ -36,8 +37,8 @@ public class IPTVPlayer extends Application {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        Propriedades propriedades = new Propriedades();
-        boolean found = new NativeDiscovery().discover();
+        new Propriedades();
+        new NativeDiscovery().discover();
         launch(args);
     }
 
@@ -76,7 +77,7 @@ public class IPTVPlayer extends Application {
         Scene scene = new Scene(root);
         stage.setResizable(false);
         stage.setScene(scene);
-        stage.setTitle("Iptv Player 2.1-15");
+        stage.setTitle("Iptv Player 2.2");
         stage.setOnCloseRequest((a) -> {
             if (PrincipalController.player.get()) {
                 Alert ale = new Alert(Alert.AlertType.WARNING);
@@ -85,6 +86,7 @@ public class IPTVPlayer extends Application {
                 ale.show();
                 a.consume();
             } else {
+                TabController.closeAllTab();
                 Platform.exit();
             }
         });

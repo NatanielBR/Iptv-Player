@@ -34,6 +34,7 @@ public class CallBackCanal implements Callback<ListView<Channel>, ListCell<Chann
                     setText(null);
                     setGraphic(null);
                 } else {
+
                     String uri = String.format("iptv/res/%d.png", item.isChanged() ? (item.isAlive() ? 0 : 2) : 1);
                     setText(item.toString());
                     setGraphic(new ImageView(uri));

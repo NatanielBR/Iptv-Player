@@ -26,7 +26,7 @@ import javafx.scene.control.*;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -39,7 +39,7 @@ public class PrincipalController implements Initializable {
     //FXML componentes
     @FXML
     private TabPane TabManager;
-    private iptv.fxml.TabController local;
+    private TabController local;
 
     private String getM3ULink() {
         TextInputDialog diag = new TextInputDialog();
@@ -60,10 +60,9 @@ public class PrincipalController implements Initializable {
 
     private Tab createTab(String m3uLocal) throws IOException {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("tab.fxml"));
-        local = new TabController(m3uLocal, true);
+        local = new TabController(m3uLocal);
         loader.setController(local);
         Tab tb = loader.load();
-        tb.setClosable(false);
         tb.setText("Local");
         return tb;
     }
@@ -76,11 +75,16 @@ public class PrincipalController implements Initializable {
     private void handleTrocaRapida(ActionEvent evt) {
         String m3u = getM3ULink();
         if (m3u != null) {
-            List<String> lista = Arrays.asList(Propriedades.instancia.getM3u());
+            List<String> lista = new ArrayList<>();
+            for (String m : Propriedades.instancia.getM3u()) {
+                lista.add(m);
+            }
             lista.add(m3u);
             Propriedades.instancia.setM3u(lista.toArray(new String[0]));
             try {
-                TabManager.getTabs().add(createTab(m3u));
+                Tab tb = createTab(m3u);
+                tb.setText("Lista " + TabManager.getTabs().size());
+                TabManager.getTabs().set(1, tb);
             } catch (IOException e) {
                 IPTVPlayer.error(e, getClass());
             }
@@ -120,12 +124,11 @@ public class PrincipalController implements Initializable {
                 m3u = new String[]{m3};
                 Propriedades.instancia.setM3u(m3u);
             }
+            int i = 1;
             for (String m : m3u) {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("tab.fxml"));
-                TabController controller = new TabController(m);
-                loader.setController(controller);
-                Tab tb = loader.load();
-                tb.setText("Lista " + TabManager.getTabs().size() + 1);
+
+                Tab tb = createTab(m);
+                tb.setText("Lista " + (i + 1));
                 TabManager.getTabs().add(tb);
             }
             String m3uLocal = Propriedades.instancia.getM3uLocal();
