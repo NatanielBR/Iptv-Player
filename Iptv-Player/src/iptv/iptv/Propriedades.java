@@ -64,6 +64,13 @@ public class Propriedades {
         return propertiesConfiguration.getString("m3uLocal");
     }
 
+    public int getLocalTime() {
+        return propertiesConfiguration.getInt("localTime", 5000);
+    }
+
+    public int getLinkTime() {
+        return propertiesConfiguration.getInt("linkTime", 10000);
+    }
     public void setM3uLocal(String m3uLocal) {
         propertiesConfiguration.setProperty("m3uLocal", m3uLocal);
         try {

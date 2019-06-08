@@ -108,7 +108,7 @@ public class TabController implements Initializable {
         M3U = m3U;
         isLocal = local;
         timer = new Timer("timer");
-        timer.schedule(getTimeTask(), 0, (isLocal ? 5000 : 10000));
+        timer.schedule(getTimeTask(), 0, (isLocal ? Propriedades.instancia.getLocalTime() : Propriedades.instancia.getLinkTime()));
     }
 
     public String getM3U() {
