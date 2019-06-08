@@ -16,8 +16,12 @@
  */
 package iptv;
 
-import java.io.*;
-import java.util.Properties;
+
+import org.apache.commons.configuration.ConfigurationException;
+import org.apache.commons.configuration.PropertiesConfiguration;
+import org.apache.commons.configuration.event.ConfigurationListener;
+
+import java.io.File;
 
 /**
  * @author Nataniel
@@ -25,62 +29,47 @@ import java.util.Properties;
 public class Propriedades {
 
     public static Propriedades instancia;
+    private PropertiesConfiguration propertiesConfiguration;
     private final String arquivo = "data.properties";
 
     Propriedades() {
         instancia = this;
+        try {
+            File f = new File(arquivo);
+            if (!f.exists()) f.createNewFile();
+            propertiesConfiguration = new PropertiesConfiguration(f);
+        } catch (Exception e) {
+            IPTVPlayer.error(e, getClass());
+        }
     }
 
-    public String getM3u() {
-        return carregar().getProperty("m3u", null);
+    public String[] getM3u() {
+        return propertiesConfiguration.getStringArray("m3u");
+    }
+
+    public void setM3u(String[] m3u) {
+        propertiesConfiguration.setProperty("m3u", m3u);
+        try {
+            propertiesConfiguration.save();
+        } catch (ConfigurationException e) {
+            IPTVPlayer.error(e, getClass());
+        }
+    }
+
+    public void addConfigurationListener(ConfigurationListener listener) {
+        propertiesConfiguration.addConfigurationListener(listener);
     }
 
     public String getM3uLocal() {
-        return carregar().getProperty("m3uLocal", null);
+        return propertiesConfiguration.getString("m3uLocal");
     }
 
-    public void setM3u(String nv) {
-        Properties prop = carregar();
-        prop.put("m3u", nv);
+    public void setM3uLocal(String m3uLocal) {
+        propertiesConfiguration.setProperty("m3uLocal", m3uLocal);
         try {
-            prop.store(saida(), "");
-        } catch (IOException ex) {
-            iptv.IPTVPlayer.error(ex, getClass());
+            propertiesConfiguration.save();
+        } catch (ConfigurationException e) {
+            IPTVPlayer.error(e, getClass());
         }
-    }
-
-    public void setM3uLocal(String nv) {
-        Properties prop = carregar();
-        prop.put("m3uLocal", nv);
-        try {
-            prop.store(saida(), "");
-        } catch (IOException ex) {
-            iptv.IPTVPlayer.error(ex, getClass());
-        }
-    }
-
-    private Properties carregar() {
-        Properties prop = new Properties();
-        File f = new File(arquivo);
-        try {
-            if (!f.exists()) {
-                f.createNewFile();
-            }
-            prop.load(new FileInputStream(f));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return prop;
-    }
-
-    private OutputStream saida() {
-        OutputStream out = null;
-        try {
-            out = new FileOutputStream(arquivo);
-        } catch (FileNotFoundException ex) {
-            IPTVPlayer.error(ex, getClass());
-        }
-        return out;
     }
 }

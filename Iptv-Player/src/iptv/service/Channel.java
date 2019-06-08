@@ -17,7 +17,8 @@
 
 package iptv.service;
 
-import com.nataniel.ExtInfo;
+
+import com.nataniel.inter.ExtInfo;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 

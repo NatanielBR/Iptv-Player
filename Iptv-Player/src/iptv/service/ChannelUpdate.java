@@ -17,9 +17,8 @@
 
 package iptv.service;
 
-import com.nataniel.ExtInfoList;
 import com.nataniel.Parser;
-import iptv.Propriedades;
+import com.nataniel.list.ExtInfoList;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
 
@@ -31,8 +30,8 @@ import java.net.URL;
 public class ChannelUpdate extends Service<ExtInfoList> {
     private String m3u;
 
-    public ChannelUpdate() {
-        this.m3u = Propriedades.instancia.getM3u();
+    public ChannelUpdate(String m3u) {
+        this.m3u = m3u;
     }
 
     public String getM3u() {

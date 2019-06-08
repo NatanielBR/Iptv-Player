@@ -17,8 +17,8 @@
 
 package iptv.fxml;
 
-import com.nataniel.ExtInfo;
-import com.nataniel.ExtInfoBuilder;
+import com.nataniel.builder.ExtInfoBuilder;
+import com.nataniel.inter.ExtInfo;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.TextField;
