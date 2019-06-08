@@ -39,7 +39,7 @@ public class PrincipalController implements Initializable {
     //FXML componentes
     @FXML
     private TabPane TabManager;
-    private TabController local;
+    public static TabController local;
 
     private String getM3ULink() {
         TextInputDialog diag = new TextInputDialog();

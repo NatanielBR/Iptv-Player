@@ -95,6 +95,7 @@ public class TabController implements Initializable {
     private boolean isloaded = false;
     private boolean isAllow = true;
     private Timer timer;
+    private Player player;
 
     public TabController(String m3U) {
         this(m3U, false);
@@ -121,6 +122,11 @@ public class TabController implements Initializable {
         timer.cancel();
     }
 
+    public void update() {
+        if (isLocal) {
+            update.restart();
+        }
+    }
     private TimerTask getTimeTask() {
         return new TimerTask() {
             @Override
@@ -133,6 +139,7 @@ public class TabController implements Initializable {
             }
         };
     }
+
     /**
      * Utilizado pra fazer a busca de canal
      */
@@ -165,7 +172,6 @@ public class TabController implements Initializable {
         Grupos.scrollTo(ob);
         Grupos.getSelectionModel().select(ob);
     };
-
 
 
     /**
@@ -209,6 +215,7 @@ public class TabController implements Initializable {
         CheckMenuItem check = (CheckMenuItem) evt.getSource();
         isAllow = check.isSelected();
     }
+
     /**
      * acao para abrir um canal
      *
@@ -216,8 +223,11 @@ public class TabController implements Initializable {
      */
     private void handleAbrirCanal(ActionEvent evt) {
         if (!PrincipalController.player.get()) {
-            Player play = new Player(canalSelecionado.getChannel().getCanalURL(), PrincipalController.player);
-            play.setVisible(true);
+            player = new Player(canalSelecionado.getChannel().getCanalURL(), PrincipalController.player);
+            PrincipalController.player.set(true);
+            player.setVisible(true);
+        } else {
+            player.toFront();
         }
     }
 
@@ -289,6 +299,7 @@ public class TabController implements Initializable {
                 ExtInfoList infoList = Parser.parserExtM3u8(new FileInputStream(f));
                 infoList.getAllExtInfo().add(newinfo);
                 Parser.ParserExtInfoListToFile(infoList, f);
+                PrincipalController.local.update();
             }
         } catch (IOException e) {
             IPTVPlayer.error(e, PrincipalController.class);
