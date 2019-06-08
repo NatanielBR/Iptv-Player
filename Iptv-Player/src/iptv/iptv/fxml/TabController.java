@@ -422,9 +422,9 @@ public class TabController implements Initializable {
                 removerMenu.setVisible(isLocal);
                 editarMenu.setVisible(isLocal);
             } else if (Canais.getSelectionModel().getSelectedItems().size() > 1) {
-                editarMenu.setVisible(true);
+                editarMenu.setVisible(isLocal);
                 salvarMenu.setVisible(false);
-                removerMenu.setVisible(true);
+                removerMenu.setVisible(isLocal);
                 abrirMenu.setVisible(false);
             }
         });
