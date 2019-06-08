@@ -164,22 +164,6 @@ public class TabController implements Initializable {
         if (i != -1) Canais.getSelectionModel().select(i);
     }
 
-
-//    /**
-//     * acao de troocar de lista
-//     *
-//     * @param evt
-//     */
-//    private void handleTrocaRapida(ActionEvent evt) {
-//        String m3u = getM3ULink();
-//        if (m3u != null) {
-//            Propriedades.instancia.setM3u(m3u);
-//            update.setM3u(Propriedades.instancia.getM3u());
-//            update.restart();
-//            isLocal = false;
-//        }
-//    }
-
     /**
      * acao para abrir um canal
      *
@@ -226,35 +210,6 @@ public class TabController implements Initializable {
             e.printStackTrace();
             System.exit(3);
         }
-    }
-
-    /**
-     * acao para abrir a lista local
-     *
-     * @param evt
-     */
-    private void handleTrocaLocal(ActionEvent evt) {
-        String m3u = Propriedades.instancia.getM3uLocal();
-        File f = null;
-        if (m3u == null) {
-            m3u = "local.m3u";
-            Propriedades.instancia.setM3uLocal(m3u);
-            f = new File(m3u);
-            try {
-                f.createNewFile();
-            } catch (IOException e) {
-                IPTVPlayer.error(e, getClass());
-            }
-        } else {
-            f = new File(m3u);
-        }
-        update.setM3u(m3u);
-        update.restart();
-    }
-
-    public void updateChannel() {
-        update.setM3u(M3U);
-        update.restart();
     }
 
     /**
@@ -356,18 +311,11 @@ public class TabController implements Initializable {
     private ContextMenu contextMenuForCanais() {
         ContextMenu contextMenu = new ContextMenu();
         //MenuItem
-        MenuItem novaLista = new MenuItem("Abrir nova lista");
-        MenuItem ultimaLista = new MenuItem("Abrir lista externa");
-        MenuItem listaLocal = new MenuItem("Abrir lista local");
         MenuItem abrirMenu = new MenuItem("Abrir Canal");
         MenuItem editarMenu = new MenuItem("Editar Canal");
         MenuItem salvarMenu = new MenuItem("Salvar Canal");
         MenuItem removerMenu = new MenuItem("Excluir Canal");
         //adicionando na ordem
-//        contextMenu.getItems().add(novaLista);
-//        contextMenu.getItems().add(ultimaLista);
-//        contextMenu.getItems().add(listaLocal);
-//        contextMenu.getItems().add(new SeparatorMenuItem());
         contextMenu.getItems().add(abrirMenu);
         contextMenu.getItems().add(editarMenu);
         contextMenu.getItems().add(salvarMenu);
@@ -375,20 +323,15 @@ public class TabController implements Initializable {
         //Acoes
         salvarMenu.setOnAction(this::handleSalvarCanal);
         abrirMenu.setOnAction(this::handleAbrirCanal);
-//        ultimaLista.setOnAction(this::handleUltimaLista);
-//        novaLista.setOnAction(this::handleTrocaRapida);
         editarMenu.setOnAction(this::handleEditarCanal);
-//        listaLocal.setOnAction(this::handleTrocaLocal);
         removerMenu.setOnAction(this::handleRemoverCanal);
         //Exibir ou ocultar alguns itens.
         contextMenu.showingProperty().addListener(a -> {
-            salvarMenu.setVisible(canalSelecionado != null && !isLocal);
             if (canalSelecionado != null) {
+                salvarMenu.setVisible(!isLocal);
                 removerMenu.setVisible(isLocal);
                 editarMenu.setVisible(isLocal);
             }
-            ultimaLista.setVisible(isLocal);
-            listaLocal.setVisible(!isLocal);
         });
         return contextMenu;
     }

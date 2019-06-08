@@ -39,7 +39,7 @@ public class Propriedades {
             if (!f.exists()) f.createNewFile();
             propertiesConfiguration = new PropertiesConfiguration(f);
         } catch (Exception e) {
-            IPTVPlayer.error(e, getClass());
+            iptv.IPTVPlayer.error(e, getClass());
         }
     }
 

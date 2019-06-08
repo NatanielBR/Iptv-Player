@@ -18,15 +18,16 @@ package iptv.fxml;
 
 import iptv.IPTVPlayer;
 import iptv.Propriedades;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.scene.control.Tab;
-import javafx.scene.control.TabPane;
-import javafx.scene.control.TextInputDialog;
+import javafx.scene.control.*;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Arrays;
+import java.util.List;
 import java.util.ResourceBundle;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -38,7 +39,7 @@ public class PrincipalController implements Initializable {
     //FXML componentes
     @FXML
     private TabPane TabManager;
-    private TabController local;
+    private iptv.fxml.TabController local;
 
     private String getM3ULink() {
         TextInputDialog diag = new TextInputDialog();
@@ -47,7 +48,17 @@ public class PrincipalController implements Initializable {
         return m3u;
     }
 
-    private Tab getLocalTab(String m3uLocal) throws IOException {
+    private Tab createLocalTab(String m3uLocal) throws IOException {
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("tab.fxml"));
+        local = new iptv.fxml.TabController(m3uLocal, true);
+        loader.setController(local);
+        Tab tb = loader.load();
+        tb.setClosable(false);
+        tb.setText("Local");
+        return tb;
+    }
+
+    private Tab createTab(String m3uLocal) throws IOException {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("tab.fxml"));
         local = new TabController(m3uLocal, true);
         loader.setController(local);
@@ -56,10 +67,49 @@ public class PrincipalController implements Initializable {
         tb.setText("Local");
         return tb;
     }
+
+    /**
+     * acao de troocar de lista
+     *
+     * @param evt
+     */
+    private void handleTrocaRapida(ActionEvent evt) {
+        String m3u = getM3ULink();
+        if (m3u != null) {
+            List<String> lista = Arrays.asList(Propriedades.instancia.getM3u());
+            lista.add(m3u);
+            Propriedades.instancia.setM3u(lista.toArray(new String[0]));
+            try {
+                TabManager.getTabs().add(createTab(m3u));
+            } catch (IOException e) {
+                IPTVPlayer.error(e, getClass());
+            }
+        }
+    }
+
+    /**
+     * Metodo para criar o contextmenu do canal.
+     *
+     * @return
+     */
+    private ContextMenu contextMenuForTabManager() {
+        ContextMenu contextMenu = new ContextMenu();
+        //MenuItem
+        MenuItem novaLista = new MenuItem("Abrir nova lista");
+        //adicionando na ordem
+        contextMenu.getItems().add(novaLista);
+        //Acoes
+        novaLista.setOnAction(this::handleTrocaRapida);
+        //Exibir ou ocultar alguns itens.
+
+        return contextMenu;
+    }
     @Override
     public void initialize(URL url, ResourceBundle rb) {
 
         player = new AtomicBoolean(false);
+        TabManager.setContextMenu(contextMenuForTabManager());
+
 
         String[] m3u = Propriedades.instancia.getM3u();
 
@@ -70,25 +120,24 @@ public class PrincipalController implements Initializable {
                 m3u = new String[]{m3};
                 Propriedades.instancia.setM3u(m3u);
             }
-            int lis = 1;
             for (String m : m3u) {
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("tab.fxml"));
                 TabController controller = new TabController(m);
                 loader.setController(controller);
                 Tab tb = loader.load();
-                tb.setText("Lista " + lis++);
+                tb.setText("Lista " + TabManager.getTabs().size() + 1);
                 TabManager.getTabs().add(tb);
             }
             String m3uLocal = Propriedades.instancia.getM3uLocal();
             if (m3uLocal != null && !m3uLocal.isEmpty()) {
-                TabManager.getTabs().add(getLocalTab(m3uLocal));
+                TabManager.getTabs().add(createLocalTab(m3uLocal));
             }
             Propriedades.instancia.addConfigurationListener((event -> {
                 if (event.getType() == 3 && !event.isBeforeUpdate() && event.getPropertyName().equals("m3uLocal")) {
                     String m3uL = Propriedades.instancia.getM3uLocal();
                     if (m3uL != null && !m3uL.isEmpty()) {
                         try {
-                            TabManager.getTabs().add(getLocalTab(m3uL));
+                            TabManager.getTabs().add(createLocalTab(m3uL));
                         } catch (IOException e) {
                             IPTVPlayer.error(e, getClass());
                         }
