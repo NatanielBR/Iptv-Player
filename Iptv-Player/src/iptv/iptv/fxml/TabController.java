@@ -118,7 +118,6 @@ public class TabController implements Initializable {
             public void run() {
                 Platform.runLater(() -> {
                     if (isloaded && isAllow) {
-                        System.out.println(M3U);
                         update.restart();
                     }
                 });
