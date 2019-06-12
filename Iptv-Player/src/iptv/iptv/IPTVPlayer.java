@@ -18,7 +18,6 @@
 package iptv;
 
 import iptv.fxml.PrincipalController;
-import iptv.fxml.TabController;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
@@ -86,7 +85,7 @@ public class IPTVPlayer extends Application {
                 ale.show();
                 a.consume();
             } else {
-                TabController.closeAllTab();
+                PrincipalController.closeAllTab();
                 Platform.exit();
             }
         });

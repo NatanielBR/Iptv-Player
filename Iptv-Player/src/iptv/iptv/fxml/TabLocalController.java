@@ -18,12 +18,15 @@
 package iptv.fxml;
 
 import com.nataniel.Parser;
+import com.nataniel.builder.ExtInfoBuilder;
 import com.nataniel.inter.ExtInfo;
 import com.nataniel.list.ExtInfoList;
 import iptv.IPTVPlayer;
 import iptv.Propriedades;
 import iptv.inter.TabControle;
+import iptv.service.Channel;
 import iptv.service.ChannelUpdate;
+import javafx.collections.ObservableList;
 import javafx.concurrent.Worker;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXMLLoader;
@@ -32,29 +35,28 @@ import javafx.scene.Parent;
 import javafx.scene.control.*;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URL;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
-public class TabController extends TabControle implements Initializable {
+public class TabLocalController extends TabControle implements Initializable {
+
     //Objetos da classe
     private final String M3U;
 
-    public TabController(String m3U) {
-        super(Propriedades.instancia.getLinkTime());
+    public TabLocalController(String m3U) {
+        super(Propriedades.instancia.getLocalTime());
         M3U = m3U;
-
     }
 
-    public String getM3U() {
-        return M3U;
+    public void update() {
+        update.restart();
     }
 
-    private void saveOnLocal(List<ExtInfo> lis) {
+    private void saveList(List<ExtInfo> lis) {
         try {
             String m3u = Propriedades.instancia.getM3uLocal();
             File f;
@@ -65,46 +67,106 @@ public class TabController extends TabControle implements Initializable {
             } else {
                 f = new File(m3u);
             }
-            ExtInfoList infoList = Parser.parserExtM3u8(new FileInputStream(f));
-            infoList.getAllExtInfo().addAll(lis);
-            Parser.ParserExtInfoListToFile(infoList, f);
-            PrincipalController.local.update();
+            Parser.ParserExtInfoListToFile(new ExtInfoList(lis), f);
+            update();
         } catch (Exception e) {
             IPTVPlayer.error(e, getClass());
         }
     }
+
+    private Alert getAlertEditor(ExtInfoEditor editor) throws IOException {
+        FXMLLoader loader = new FXMLLoader();
+        loader.setController(editor);
+        Parent par = loader.load(editor.getClass().getResourceAsStream("ExtInfoEditor.fxml"));
+        Alert alert = new Alert(Alert.AlertType.NONE);
+        DialogPane pane = new DialogPane();
+        pane.setContent(par);
+        alert.setDialogPane(pane);
+        alert.getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        return alert;
+    }
+
     /**
-     * acao de salvar o canal na lista local
+     * acao para editar um canal
      *
      * @param evt
      */
-    public void handleSalvarCanal(ActionEvent evt) {
-        if (canalSelecionado.size() == 1) {
-            ExtInfoEditor editor = new ExtInfoEditor(canalSelecionado.get(0).getChannel());
-            FXMLLoader loader = new FXMLLoader();
-            loader.setController(editor);
+    private void handleEditarCanal(ActionEvent evt) {
+        ExtInfo newinfo;
+        ExtInfoEditor editor;
+        if (canalSelecionado.size() > 1) {
+            ObservableList<Channel> channels = Canais.getSelectionModel().getSelectedItems();
+            editor = new ExtInfoEditor();
             try {
-                Parent par = loader.load(editor.getClass().getResourceAsStream("ExtInfoEditor.fxml"));
-                Alert alert = new Alert(Alert.AlertType.NONE);
-                DialogPane pane = new DialogPane();
-                pane.setContent(par);
-                alert.setDialogPane(pane);
-                alert.getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
-                ButtonType type = alert.showAndWait().get();
-                if (type == ButtonType.OK) {
-                    saveOnLocal(Arrays.asList(editor.getExtInfo()));
+                Alert alert = getAlertEditor(editor);
+                if (alert.showAndWait().get() == ButtonType.OK) {
+                    List<ExtInfo> info = new ArrayList<>();
+                    String grupo = editor.getExtInfo().getGrupo();
+                    channels.forEach((a) -> {
+                        ExtInfo temp = a.getChannel();
+                        ExtInfoBuilder bu = new ExtInfoBuilder();
+                        bu.setCanalNome(temp.getCanalNome());
+                        bu.setCanalURL(temp.getCanalURL());
+                        bu.setLogoURL(temp.getLogoURL());
+                        bu.setId(temp.getId());
+                        bu.setGrupo(grupo);
+                        info.add(bu.builder());
+                    });
+                    saveList(info);
+                }
+            } catch (IOException e) {
+                IPTVPlayer.error(e, getClass());
+            }
+        } else {
+            ExtInfo selec = canalSelecionado.get(0).getChannel();
+            try {
+                editor = new ExtInfoEditor(selec);
+                Alert alert = getAlertEditor(editor);
+                if (alert.showAndWait().get() == ButtonType.OK) {
+                    newinfo = editor.getExtInfo();
+                    List<ExtInfo> infos = CANAIS.getAllExtInfo();
+                    infos.remove(selec);
+                    infos.add(newinfo);
+                    saveList(infos);
                 }
             } catch (IOException e) {
                 IPTVPlayer.error(e, PrincipalController.class);
                 e.printStackTrace();
                 System.exit(3);
             }
-        } else {
-            saveOnLocal(canalSelecionado.stream().map(a -> a.getChannel()).collect(Collectors.toList()));
-
         }
-
     }
+
+    /**
+     * acao para remover um canal na lista local
+     *
+     * @param evt
+     */
+    private void handleRemoverCanal(ActionEvent evt) {
+        saveList(removerCanais(canalSelecionado));
+    }
+
+    private List<ExtInfo> removerCanais(List<Channel> apS) {
+        List<ExtInfo> lista = CANAIS.getAllExtInfo();
+        for (Channel info : apS) {
+            lista = removerCanal(info.getChannel(), lista);
+        }
+        return lista;
+    }
+
+    private List<ExtInfo> removerCanal(ExtInfo info, List<ExtInfo> infos) {
+        infos.removeIf((a) ->
+                a.getCanalURL().equals(info.getCanalURL())
+        );
+        return infos;
+    }
+
+    private void handleRemoverCanaisOff(ActionEvent evt) {
+        List<Channel> onlines = new ArrayList<>();
+        onlines.addAll(canais.stream().filter((a) -> (a.isChanged() && a.isAlive())).collect(Collectors.toList()));
+        saveList(removerCanais(onlines));
+    }
+
     /**
      * Metodo para criar o contextmenu do canal.
      *
@@ -114,29 +176,38 @@ public class TabController extends TabControle implements Initializable {
         ContextMenu contextMenu = new ContextMenu();
         //MenuItem
         MenuItem abrirMenu = new MenuItem("Abrir Canal");
-        MenuItem salvarMenu = new MenuItem("Salvar Canal");
+        MenuItem editarMenu = new MenuItem("Editar Canal");
+        MenuItem removerMenu = new MenuItem("Excluir Canal");
+        MenuItem removerOffMenu = new MenuItem("Excluir Canais Offline");
         MenuItem atualizarMenu = new MenuItem("Atualizar Agora");
         CheckMenuItem autoAtualizar = new CheckMenuItem("Auto Atualizar");
         //adicionando na ordem
         contextMenu.getItems().add(abrirMenu);
-        contextMenu.getItems().add(salvarMenu);
+        contextMenu.getItems().add(editarMenu);
+        contextMenu.getItems().add(removerMenu);
+        contextMenu.getItems().add(removerOffMenu);
         contextMenu.getItems().add(atualizarMenu);
         contextMenu.getItems().add(autoAtualizar);
         //Acoes
-        salvarMenu.setOnAction(this::handleSalvarCanal);
         abrirMenu.setOnAction(this::handleAbrirCanal);
+        editarMenu.setOnAction(this::handleEditarCanal);
+        removerMenu.setOnAction(this::handleRemoverCanal);
         autoAtualizar.setOnAction(this::handleAutoAtualiar);
+        removerOffMenu.setOnAction(this::handleRemoverCanaisOff);
         atualizarMenu.setOnAction(this::handleAtualizarAgora);
         //Exibir ou ocultar alguns itens.
         autoAtualizar.setSelected(true);
         contextMenu.showingProperty().addListener(a -> {
             if (Canais.getSelectionModel().getSelectedItems().size() == 1) {
                 abrirMenu.setVisible(true);
-                salvarMenu.setVisible(true);
+                removerMenu.setVisible(true);
+                editarMenu.setVisible(true);
             } else if (Canais.getSelectionModel().getSelectedItems().size() > 1) {
-                salvarMenu.setVisible(true);
+                editarMenu.setVisible(true);
+                removerMenu.setVisible(true);
                 abrirMenu.setVisible(false);
             }
+            removerOffMenu.setVisible(true);
         });
         return contextMenu;
     }

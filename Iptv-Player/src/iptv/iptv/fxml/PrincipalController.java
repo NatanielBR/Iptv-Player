@@ -18,6 +18,7 @@ package iptv.fxml;
 
 import iptv.IPTVPlayer;
 import iptv.Propriedades;
+import iptv.inter.TabControle;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -27,6 +28,7 @@ import javafx.scene.control.*;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -39,8 +41,41 @@ public class PrincipalController implements Initializable {
     //FXML componentes
     @FXML
     private TabPane TabManager;
-    public static TabController local;
+    public static TabLocalController local;
+    private static List<TabControle> controllers = null;
+    private String tabRemove;
 
+    public static void closeAllTab() {
+        controllers.forEach((a) -> {
+            a.closeTab();
+        });
+    }
+
+    private Comparator<Tab> getCompartor() {
+        return (a, b) -> {
+            if (a.getText().equals("Local")) {
+                return 1;
+            } else {
+                return a.getText().compareTo(b.getText());
+            }
+        };
+    }
+
+    private void sortTab() {
+        List<Tab> lis = new ArrayList<>(TabManager.getTabs());
+        int i = 1;
+        for (Tab tb : lis) {
+            if (tb.getText().equals("Local") || tb.getText().equals(tabRemove)) {
+                continue;
+            } else {
+                tb.setText("Lista " + i++);
+            }
+        }
+        tabRemove = null;
+        lis.sort(getCompartor());
+        TabManager.getTabs().clear();
+        TabManager.getTabs().setAll(lis);
+    }
     private String getM3ULink() {
         TextInputDialog diag = new TextInputDialog();
         diag.setHeaderText("Informe uma URL");
@@ -50,11 +85,12 @@ public class PrincipalController implements Initializable {
 
     private Tab createLocalTab(String m3uLocal) throws IOException {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("tab.fxml"));
-        local = new iptv.fxml.TabController(m3uLocal, true);
+        local = new TabLocalController(m3uLocal);
         loader.setController(local);
         Tab tb = loader.load();
         tb.setClosable(false);
         tb.setText("Local");
+        controllers.add(local);
         return tb;
     }
 
@@ -72,8 +108,11 @@ public class PrincipalController implements Initializable {
             }
             lista.remove(local.getM3U());
             Propriedades.instancia.setM3u(lista.toArray(new String[0]));
+            tabRemove = tb.getText();
+            sortTab();
+
         });
-        tb.setText("Local");
+        controllers.add(local);
         return tb;
     }
 
@@ -94,7 +133,8 @@ public class PrincipalController implements Initializable {
             try {
                 Tab tb = createTab(m3u);
                 tb.setText("Lista " + TabManager.getTabs().size());
-                TabManager.getTabs().set(1, tb);
+                TabManager.getTabs().add(tb);
+                sortTab();
             } catch (IOException e) {
                 IPTVPlayer.error(e, getClass());
             }
@@ -123,7 +163,7 @@ public class PrincipalController implements Initializable {
 
         player = new AtomicBoolean(false);
         TabManager.setContextMenu(contextMenuForTabManager());
-
+        controllers = new ArrayList<>();
 
         String[] m3u = Propriedades.instancia.getM3u();
 
@@ -136,7 +176,6 @@ public class PrincipalController implements Initializable {
             }
             int i = 1;
             for (String m : m3u) {
-
                 Tab tb = createTab(m);
                 tb.setText("Lista " + (i++));
                 TabManager.getTabs().add(tb);
