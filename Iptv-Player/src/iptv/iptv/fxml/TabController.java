@@ -96,7 +96,6 @@ public class TabController extends TabControle implements Initializable {
                 }
             } catch (IOException e) {
                 IPTVPlayer.error(e, PrincipalController.class);
-                e.printStackTrace();
                 System.exit(3);
             }
         } else {

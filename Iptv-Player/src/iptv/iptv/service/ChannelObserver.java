@@ -17,6 +17,7 @@
 
 package iptv.service;
 
+import iptv.IPTVPlayer;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
 
@@ -74,7 +75,7 @@ public class ChannelObserver extends Service<String> {
 
     @Override
     protected void failed() {
-        getException().printStackTrace();
+        IPTVPlayer.error(getException(), getClass());
         super.failed();
     }
 }

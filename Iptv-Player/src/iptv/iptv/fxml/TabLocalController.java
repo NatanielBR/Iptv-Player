@@ -131,7 +131,6 @@ public class TabLocalController extends TabControle implements Initializable {
                 }
             } catch (IOException e) {
                 IPTVPlayer.error(e, PrincipalController.class);
-                e.printStackTrace();
                 System.exit(3);
             }
         }

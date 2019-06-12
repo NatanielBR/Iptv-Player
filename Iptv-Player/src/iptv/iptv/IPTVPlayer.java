@@ -26,6 +26,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.stage.Stage;
 import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 import uk.co.caprica.vlcj.discovery.NativeDiscovery;
 
@@ -51,11 +52,26 @@ public class IPTVPlayer extends Application {
                 Alert ale = new Alert(Alert.AlertType.ERROR);
                 ale.setContentText(err.toString());
                 ale.showAndWait();
-                err.printStackTrace();
+                Logger.getLogger(clse).error(err.getMessage(), err);
             } catch (Exception er) {
-                er.printStackTrace();
-                System.out.println(clse.getName());
-                err.printStackTrace();
+                Logger.getLogger(clse).error("Erro ao exibir a mensagem.");
+                Logger.getLogger(clse).error(err.getMessage(), er);
+                Logger.getLogger(clse).error(err.getMessage(), err);
+            }
+        });
+    }
+
+    public static void error(Throwable err, Class clse) {
+        Platform.runLater(() -> {
+            try {
+                Alert ale = new Alert(Alert.AlertType.ERROR);
+                ale.setContentText(err.toString());
+                ale.showAndWait();
+                Logger.getLogger(clse).error(err.getMessage(), err);
+            } catch (Exception er) {
+                Logger.getLogger(clse).error("Erro ao exibir a mensagem.");
+                Logger.getLogger(clse).error(err.getMessage(), er);
+                Logger.getLogger(clse).error(err.getMessage(), err);
             }
         });
     }
@@ -66,10 +82,11 @@ public class IPTVPlayer extends Application {
                 Alert ale = new Alert(Alert.AlertType.ERROR);
                 ale.setContentText(err);
                 ale.showAndWait();
+                Logger.getLogger(clse).error(err);
             } catch (Exception er) {
-                er.printStackTrace();
-                System.err.println(clse.getName());
-                System.err.println(err);
+                Logger.getLogger(clse).error("Erro ao exibir a mensagem.");
+                Logger.getLogger(clse).error(er.getMessage(), er);
+                Logger.getLogger(clse).error(err);
             }
         });
     }
