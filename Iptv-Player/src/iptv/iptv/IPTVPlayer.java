@@ -25,6 +25,8 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.stage.Stage;
+import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.PropertyConfigurator;
 import uk.co.caprica.vlcj.discovery.NativeDiscovery;
 
 /**
@@ -36,6 +38,8 @@ public class IPTVPlayer extends Application {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
+        BasicConfigurator.configure();
+        PropertyConfigurator.configure("log4j.properties");
         new Propriedades();
         new NativeDiscovery().discover();
         launch(args);
