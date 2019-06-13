@@ -21,6 +21,7 @@ import com.nataniel.Parser;
 import com.nataniel.list.ExtInfoList;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
+import org.apache.log4j.Logger;
 
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -29,9 +30,11 @@ import java.net.URL;
 
 public class ChannelUpdate extends Service<ExtInfoList> {
     private String m3u;
+    private Logger logger;
 
     public ChannelUpdate(String m3u) {
         this.m3u = m3u;
+        logger = Logger.getLogger(getClass());
     }
 
     public String getM3u() {
@@ -48,6 +51,7 @@ public class ChannelUpdate extends Service<ExtInfoList> {
             @Override
             protected ExtInfoList call() throws Exception {
                 Thread.sleep(500);
+                logger.debug("Atualizando " + m3u);
                 return Parser.parserExtM3u8(getInputStreamByM3U(m3u));
             }
         };

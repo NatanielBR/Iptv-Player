@@ -20,6 +20,7 @@ package iptv;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.commons.configuration.event.ConfigurationListener;
+import org.apache.log4j.Logger;
 
 import java.io.File;
 
@@ -30,10 +31,12 @@ public class Propriedades {
 
     public static Propriedades instancia;
     private PropertiesConfiguration propertiesConfiguration;
+    private Logger logger;
     private final String arquivo = "data.properties";
 
     Propriedades() {
         instancia = this;
+        logger = Logger.getLogger(getClass());
         try {
             File f = new File(arquivo);
             if (!f.exists()) f.createNewFile();
@@ -51,6 +54,7 @@ public class Propriedades {
         propertiesConfiguration.setProperty("m3u", m3u);
         try {
             propertiesConfiguration.save();
+            logger.debug("Inserido " + m3u.length + " URLs na chave m3u.");
         } catch (ConfigurationException e) {
             IPTVPlayer.error(e, getClass());
         }
@@ -60,17 +64,58 @@ public class Propriedades {
         propertiesConfiguration.addConfigurationListener(listener);
     }
 
+    public boolean isDebug() {
+        String deb = propertiesConfiguration.getString("debug", "");
+        boolean ret;
+        if (deb.isEmpty()) {
+            ret = false;
+            propertiesConfiguration.setProperty("debug", false);
+            try {
+                propertiesConfiguration.save();
+            } catch (ConfigurationException e) {
+                IPTVPlayer.error(e, getClass());
+            }
+        } else {
+            ret = Boolean.valueOf(deb);
+        }
+        logger.info("Debug esta " + (ret ? "Ativado" : "Desativado"));
+        return ret;
+    }
+
     public String getM3uLocal() {
         return propertiesConfiguration.getString("m3uLocal");
     }
 
     public int getLocalTime() {
-        return propertiesConfiguration.getInt("localTime", 5000);
+        int a = propertiesConfiguration.getInt("localTime", -1);
+        if (a == -1) {
+            a = 5000;
+            propertiesConfiguration.setProperty("localTime", a);
+            try {
+                propertiesConfiguration.save();
+            } catch (ConfigurationException e) {
+                IPTVPlayer.error(e, getClass());
+            }
+        }
+        return a;
+
     }
 
     public int getLinkTime() {
-        return propertiesConfiguration.getInt("linkTime", 10000);
+        int a = propertiesConfiguration.getInt("linkTime", -1);
+        if (a == -1) {
+            a = 10000;
+            propertiesConfiguration.setProperty("linkTime", a);
+            try {
+                propertiesConfiguration.save();
+            } catch (ConfigurationException e) {
+                IPTVPlayer.error(e, getClass());
+            }
+        }
+        return a;
+
     }
+
     public void setM3uLocal(String m3uLocal) {
         propertiesConfiguration.setProperty("m3uLocal", m3uLocal);
         try {

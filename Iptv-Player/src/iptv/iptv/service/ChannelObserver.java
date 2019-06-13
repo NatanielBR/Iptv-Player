@@ -20,6 +20,7 @@ package iptv.service;
 import iptv.IPTVPlayer;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
+import org.apache.log4j.Logger;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -27,9 +28,10 @@ import java.util.List;
 
 public class ChannelObserver extends Service<String> {
     private List<Channel> canais;
-
+    private Logger logger;
     public ChannelObserver(List<Channel> canais) {
         this.canais = canais;
+        logger = Logger.getLogger(getClass());
     }
 
     @Override
@@ -66,6 +68,9 @@ public class ChannelObserver extends Service<String> {
                             offline));
                 }
                 updateMessage(String.format("Finalizado | Online: %d Offline: %d",
+                        online,
+                        offline));
+                logger.info(String.format("Finalizado | Online: %d Offline: %d",
                         online,
                         offline));
                 return null;

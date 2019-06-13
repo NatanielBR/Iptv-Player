@@ -26,6 +26,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.stage.Stage;
 import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 import uk.co.caprica.vlcj.discovery.NativeDiscovery;
@@ -42,6 +43,11 @@ public class IPTVPlayer extends Application {
         BasicConfigurator.configure();
         PropertyConfigurator.configure("log4j.properties");
         new Propriedades();
+        if (Propriedades.instancia.isDebug()) {
+            Logger.getRootLogger().setLevel(Level.DEBUG);
+        } else {
+            Logger.getRootLogger().setLevel(Level.INFO);
+        }
         new NativeDiscovery().discover();
         launch(args);
     }

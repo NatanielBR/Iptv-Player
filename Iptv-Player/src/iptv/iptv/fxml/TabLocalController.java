@@ -112,6 +112,9 @@ public class TabLocalController extends TabControle implements Initializable {
                         bu.setGrupo(grupo);
                         info.add(bu.builder());
                     });
+                    List<ExtInfo> antigo = CANAIS.getAllExtInfo();
+                    antigo.removeAll(info);
+                    info.addAll(antigo);
                     saveList(info);
                 }
             } catch (IOException e) {
