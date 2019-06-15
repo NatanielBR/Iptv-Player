@@ -208,7 +208,8 @@ public class PrincipalController implements Initializable {
                     Alert novaVersao = new Alert(Alert.AlertType.INFORMATION);
                     novaVersao.setTitle("Nova versão");
                     novaVersao.setHeaderText("Nova versão disponivel");
-                    novaVersao.setContentText(String.format("Uma nova versão esta disponivel.\nSua versão: %sv%d\nNova versão: %s"
+                    novaVersao.setContentText(String.format(
+                            "Uma nova versão esta disponivel.\nSua versão: %sv%d\nNova versão: %s"
                             , VersionNotify.VERSAO
                             , VersionNotify.BUILD
                             , notify.getMessage()));
