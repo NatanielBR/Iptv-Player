@@ -17,9 +17,12 @@
 package iptv;
 
 
-import org.apache.commons.configuration.ConfigurationException;
-import org.apache.commons.configuration.PropertiesConfiguration;
-import org.apache.commons.configuration.event.ConfigurationListener;
+import org.apache.commons.configuration2.PropertiesConfiguration;
+import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder;
+import org.apache.commons.configuration2.builder.fluent.Configurations;
+import org.apache.commons.configuration2.event.ConfigurationEvent;
+import org.apache.commons.configuration2.event.EventListener;
+import org.apache.commons.configuration2.event.EventType;
 import org.apache.log4j.Logger;
 
 import java.io.File;
@@ -30,51 +33,50 @@ import java.io.File;
 public class Propriedades {
 
     public static Propriedades instancia;
-    private PropertiesConfiguration propertiesConfiguration;
+
+    private final String ARQUIVO = "data.properties";
     private Logger logger;
-    private final String arquivo = "data.properties";
+    private FileBasedConfigurationBuilder<PropertiesConfiguration> builder;
+    private PropertiesConfiguration property;
 
     Propriedades() {
         instancia = this;
         logger = Logger.getLogger(getClass());
+        Configurations config = new Configurations();
         try {
-            File f = new File(arquivo);
-            if (!f.exists()) f.createNewFile();
-            propertiesConfiguration = new PropertiesConfiguration(f);
+            File f = new File(ARQUIVO);
+            if (!f.exists()) {
+                f.createNewFile();
+            }
+            builder = config.propertiesBuilder(f);
+            property = builder.getConfiguration();
+            builder.setAutoSave(true);
         } catch (Exception e) {
-            iptv.IPTVPlayer.error(e, getClass());
+            IPTVPlayer.error(e, getClass());
+            logger.error("Saindo...");
+            System.exit(4);
         }
     }
 
     public String[] getM3u() {
-        return propertiesConfiguration.getStringArray("m3u");
+        return property.getStringArray("m3u");
     }
 
     public void setM3u(String[] m3u) {
-        propertiesConfiguration.setProperty("m3u", m3u);
-        try {
-            propertiesConfiguration.save();
-            logger.debug("Inserido " + m3u.length + " URLs na chave m3u.");
-        } catch (ConfigurationException e) {
-            IPTVPlayer.error(e, getClass());
-        }
+        property.setProperty("m3u", m3u);
+        logger.debug("Inserido " + m3u.length + " URLs na chave m3u.");
     }
 
-    public void addConfigurationListener(ConfigurationListener listener) {
-        propertiesConfiguration.addConfigurationListener(listener);
+    public void addConfigurationListener(EventType tipo, EventListener<ConfigurationEvent> listener) {
+        builder.addEventListener(tipo, listener);
     }
 
     public boolean isDebug() {
-        String deb = propertiesConfiguration.getString("debug", "");
+        String deb = property.getString("debug", "");
         boolean ret;
         if (deb.isEmpty()) {
             ret = false;
-            propertiesConfiguration.setProperty("debug", false);
-            try {
-                propertiesConfiguration.save();
-            } catch (ConfigurationException e) {
-                IPTVPlayer.error(e, getClass());
-            }
+            property.setProperty("debug", false);
         } else {
             ret = Boolean.valueOf(deb);
         }
@@ -82,46 +84,42 @@ public class Propriedades {
         return ret;
     }
 
+    public boolean isVersionNotify() {
+        String not = property.getString("versionNotify", "");
+        boolean ret;
+        if (not.isEmpty()) {
+            ret = false;
+            property.setProperty("versionNotify", true);
+        } else {
+            ret = Boolean.valueOf(not);
+        }
+        return ret;
+    }
     public String getM3uLocal() {
-        return propertiesConfiguration.getString("m3uLocal");
+        return property.getString("m3uLocal");
+    }
+
+    public void setM3uLocal(String m3uLocal) {
+        property.setProperty("m3uLocal", m3uLocal);
     }
 
     public int getLocalTime() {
-        int a = propertiesConfiguration.getInt("localTime", -1);
+        int a = property.getInt("localTime", -1);
         if (a == -1) {
             a = 5000;
-            propertiesConfiguration.setProperty("localTime", a);
-            try {
-                propertiesConfiguration.save();
-            } catch (ConfigurationException e) {
-                IPTVPlayer.error(e, getClass());
-            }
+            property.setProperty("localTime", a);
         }
         return a;
 
     }
 
     public int getLinkTime() {
-        int a = propertiesConfiguration.getInt("linkTime", -1);
+        int a = property.getInt("linkTime", -1);
         if (a == -1) {
             a = 10000;
-            propertiesConfiguration.setProperty("linkTime", a);
-            try {
-                propertiesConfiguration.save();
-            } catch (ConfigurationException e) {
-                IPTVPlayer.error(e, getClass());
-            }
+            property.setProperty("linkTime", a);
         }
         return a;
 
-    }
-
-    public void setM3uLocal(String m3uLocal) {
-        propertiesConfiguration.setProperty("m3uLocal", m3uLocal);
-        try {
-            propertiesConfiguration.save();
-        } catch (ConfigurationException e) {
-            IPTVPlayer.error(e, getClass());
-        }
     }
 }

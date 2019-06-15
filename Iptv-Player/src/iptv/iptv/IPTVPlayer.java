@@ -18,6 +18,7 @@
 package iptv;
 
 import iptv.fxml.PrincipalController;
+import iptv.service.VersionNotify;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
@@ -103,7 +104,7 @@ public class IPTVPlayer extends Application {
         Scene scene = new Scene(root);
         stage.setResizable(false);
         stage.setScene(scene);
-        stage.setTitle("Iptv Player 2.3");
+        stage.setTitle("Iptv Player " + VersionNotify.VERSAO);
         stage.setOnCloseRequest((a) -> {
             if (PrincipalController.player.get()) {
                 Alert ale = new Alert(Alert.AlertType.WARNING);

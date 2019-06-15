@@ -67,7 +67,7 @@ public class TabLocalController extends TabControle implements Initializable {
             } else {
                 f = new File(m3u);
             }
-            Parser.ParserExtInfoListToFile(new ExtInfoList(lis), f);
+            Parser.ParserChannelListToFile(new ExtInfoList(lis), f);
             update();
         } catch (Exception e) {
             IPTVPlayer.error(e, getClass());

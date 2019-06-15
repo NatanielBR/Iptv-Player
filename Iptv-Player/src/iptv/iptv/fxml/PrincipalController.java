@@ -19,11 +19,13 @@ package iptv.fxml;
 import iptv.IPTVPlayer;
 import iptv.Propriedades;
 import iptv.inter.TabControle;
+import iptv.service.VersionNotify;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
+import org.apache.commons.configuration2.event.ConfigurationEvent;
 
 import java.io.IOException;
 import java.net.URL;
@@ -44,11 +46,16 @@ public class PrincipalController implements Initializable {
     public static TabLocalController local;
     private static List<TabControle> controllers = null;
     private String tabRemove;
+    private static VersionNotify notify;
+
+    public PrincipalController() {
+    }
 
     public static void closeAllTab() {
         controllers.forEach((a) -> {
             a.closeTab();
         });
+        notify.cancel();
     }
 
     private Comparator<Tab> getCompartor() {
@@ -60,7 +67,6 @@ public class PrincipalController implements Initializable {
             }
         };
     }
-
     private void sortTab() {
         List<Tab> lis = new ArrayList<>(TabManager.getTabs());
         int i = 1;
@@ -184,8 +190,8 @@ public class PrincipalController implements Initializable {
             if (m3uLocal != null && !m3uLocal.isEmpty()) {
                 TabManager.getTabs().add(createLocalTab(m3uLocal));
             }
-            Propriedades.instancia.addConfigurationListener((event -> {
-                if (event.getType() == 3 && !event.isBeforeUpdate() && event.getPropertyName().equals("m3uLocal")) {
+            Propriedades.instancia.addConfigurationListener(ConfigurationEvent.SET_PROPERTY, (event -> {
+                if (!event.isBeforeUpdate() && event.getPropertyName().equals("m3uLocal")) {
                     String m3uL = Propriedades.instancia.getM3uLocal();
                     if (m3uL != null && !m3uL.isEmpty()) {
                         try {
@@ -196,11 +202,33 @@ public class PrincipalController implements Initializable {
                     }
                 }
             }));
+            notify = new VersionNotify();
+            notify.valueProperty().addListener((a, b, c) -> {
+                if (c != null && c.booleanValue()) {
+                    Alert novaVersao = new Alert(Alert.AlertType.INFORMATION);
+                    novaVersao.setTitle("Nova versão");
+                    novaVersao.setHeaderText("Nova versão disponivel");
+                    novaVersao.setContentText(String.format("Uma nova versão esta disponivel.\nSua versão: %sv%d\nNova versão: %s"
+                            , VersionNotify.VERSAO
+                            , VersionNotify.BUILD
+                            , notify.getMessage()));
+                    ButtonType abrir = new ButtonType("Atualizar", ButtonBar.ButtonData.OK_DONE);
+                    ButtonType ignore = new ButtonType("Não Atualizar", ButtonBar.ButtonData.CANCEL_CLOSE);
+                    novaVersao.getButtonTypes().setAll(abrir, ignore);
+                    ButtonType resposta = novaVersao.showAndWait().orElse(ignore);
+                    if (resposta.equals(abrir)) {
+                        try {
+                            java.awt.Desktop.getDesktop().browse(new URL("https://github.com/NatanielBR/Iptv-Player/releases/latest").toURI());
+                        } catch (Exception e) {
+                            IPTVPlayer.error(e, getClass());
+                        }
+                    }
+                }
+            });
+            if (Propriedades.instancia.isVersionNotify()) notify.start();
         } catch (Exception err) {
             IPTVPlayer.error(err, getClass());
         }
-
-
     }
 
 }

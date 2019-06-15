@@ -34,7 +34,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.Background;
 import javafx.util.Callback;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -62,15 +62,6 @@ public abstract class TabControle {
     private ListView<Button> Grupos;
     private ChannelObserver observer;
     private List<Button> GRUPOS = null;
-    /**
-     * Utilizado para fazer a busca de grupos
-     */
-    private final EventHandler<ActionEvent> grupoBusca = (a) -> {
-        Button ob = GRUPOS.stream().filter((aa) -> StringUtils.containsIgnoreCase(aa.getText(), entGrupo.getText())).findFirst().orElse(null);
-        if (ob == null) return;
-        Grupos.scrollTo(ob);
-        Grupos.getSelectionModel().select(ob);
-    };
     private Player player;
     private Timer timer;
     private boolean isAllow = true;
@@ -98,6 +89,16 @@ public abstract class TabControle {
             }
         };
     }
+
+    /**
+     * Utilizado para fazer a busca de grupos
+     */
+    private final EventHandler<ActionEvent> grupoBusca = (a) -> {
+        Button ob = GRUPOS.stream().filter((aa) -> StringUtils.containsIgnoreCase(aa.getText(), entGrupo.getText())).findFirst().orElse(null);
+        if (ob == null) return;
+        Grupos.scrollTo(ob);
+        Grupos.getSelectionModel().select(ob);
+    };
 
     protected void handleCanalBusca(ActionEvent a) {
         List<ExtInfo> lista = CANAIS.getAllExtInfo();

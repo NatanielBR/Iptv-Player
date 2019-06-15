@@ -67,7 +67,7 @@ public class TabController extends TabControle implements Initializable {
             }
             ExtInfoList infoList = Parser.parserExtM3u8(new FileInputStream(f));
             infoList.getAllExtInfo().addAll(lis);
-            Parser.ParserExtInfoListToFile(infoList, f);
+            Parser.ParserChannelListToFile(infoList, f);
             PrincipalController.local.update();
         } catch (Exception e) {
             IPTVPlayer.error(e, getClass());
